@@ -2,8 +2,6 @@
 This is a test chat-based responsive automatic command structured script based on TinyLLaMa models.
 
 
-THING name ->  A.L.F.R.E.D
-
 Its full form I made is:
     
     Automated Learning Framework for Research and Everyday Duties
