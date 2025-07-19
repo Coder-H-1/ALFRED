@@ -14,13 +14,15 @@ Inspired by `ALFRED Pennyworth` from `The Dark knight` movie
 
 ABOUT:
 
-`main.py` file is for joining file for all functions
+*`main.py`* file is the starting file
 
-It uses `llama_cpp` for LLM in gguf format
+*`launcher.pyw`* is a hotkey listener and works in background
+
+It uses *`llama_cpp`* for LLM in gguf format
 
 llama_cpp download : `pip install llama-cpp-python`
 
-[ALFRED] is currently using `OpenHermes-2.5-mistril-7b.Q4_L_M.gguf`
+[ALFRED] is currently using *`OpenHermes-2.5-mistril-7b.Q4_L_M.gguf`*
 
 model link : `https://huggingface.co/TheBloke/OpenHermes-2.5-Mistral-7B-GGUF/tree/main`
 
