@@ -20,7 +20,6 @@ ABOUT:
 
 It uses *`llama_cpp`* for LLM in gguf format
 
-llama_cpp download : `pip install llama-cpp-python`
 
 [ALFRED] is currently using *`OpenHermes-2.5-mistril-7b.Q4_L_M.gguf`*
 
