@@ -30,15 +30,24 @@ NOTE: Download A Converstional model like above and MOVE it to FILES\model
 
 *PYTHON MODULES* used:
 
-    [EXTERNAL]  <-: needs to be installed
-        
-        llama_cpp_python, keyboard, pyautogui, speechRecognition, pycaw, pyttsx3, \
-        vosk, pyaudio, requests, vlc, yt_dlp, screen_brightness_control, dateparser
+[EXTERNAL]  <-: needs to be installed
 
-        To download them use:  [CMD/PowerShell]
+[names]
+llama-cpp-python, keyboard, pyautogui, speechRecognition, pycaw, pyttsx3, \
+vosk, pyaudio, requests, vlc, yt_dlp, screen_brightness_control, dateparser
 
-        *`pip install llama_cpp_python keyboard pyautogui speechRecognition pycaw pyttsx3 vosk pyaudio requests python-vlc yt_dlp screen_brightness_control`*
+To download them use:  [CMD/PowerShell]
 
-    [PRELOADED / INTERNAL] <-: already included in python installation
+    pip install llama-cpp-python keyboard pyautogui speechRecognition pycaw pyttsx3 vosk pyaudio requests python-vlc yt_dlp screen_brightness_control
 
-        os, sys, threading, subprocess, time, json, datetime
+[PRELOADED / INTERNAL] <-: already included in python installation
+
+    os, sys, threading, subprocess, time, json, datetime
+
+Some of the python modules may not work or download like regular ones, for that you can download prebuilt wheels
+
+NOTE: Download the version that matches your Python interpreter
+
+
+pyaudio : `https://pypi.org/project/PyAudio/#files`
+llama_cpp_python : `https://pypi.org/project/llama-cpp-python/#description`
