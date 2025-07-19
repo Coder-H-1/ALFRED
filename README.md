@@ -24,7 +24,7 @@ llama_cpp download : `pip install llama-cpp-python`
 
 model link : `https://huggingface.co/TheBloke/OpenHermes-2.5-Mistral-7B-GGUF/tree/main`
 
-NOTE: DOWNLOAD A Converstional model like above and MOVE it to 
+NOTE: DOWNLOAD A Converstional model like above and MOVE it to FILES\\model
 
 
 
