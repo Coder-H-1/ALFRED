@@ -49,5 +49,5 @@ Some of the python modules may not work or download like regular ones, for that 
 NOTE: Download the version that matches your Python interpreter
 
 
-pyaudio : `https://pypi.org/project/PyAudio/#files`
+pyaudio : `https://pypi.org/project/PyAudio/#files` \
 llama_cpp_python : `https://pypi.org/project/llama-cpp-python/#description`
