@@ -4,7 +4,11 @@ class Work:
     def __init__(self, filepath:str):
         self.content = []
         self.path = str(filepath)
+        self.filepath = os.path.split(filepath)[0]
+        self.output_name = ""
         self.readFile()
+        
+        self.prompt = ""
 
     def readFile(self) -> list:
         if os.path.exists(f"{self.path}"):
@@ -59,6 +63,33 @@ class Work:
 
         return True
 
+    def make_thread(self) -> None:
+        with open(f"{self.filepath}/{self.output_name}.py", "w") as FILE:
+            FILE.write("""
+from llama_cpp import Llama
+
+MODEL_PATH = "FILES\\model\\Coder.gguf"
+
+LLM = Llama( model_path=MODEL_PATH, n_ctx=6144, n_threads=10, verbose=False )
+
+def write_output(filepath:str, contents:str):
+    with open(f"{filepath}/output" , "r") as file:
+        file.write(f"{contents}")
+                       
+def Responce(text:str) -> str:
+
+    out = LLM(text, max_tokens=100, stop=["User:", "Butler:"], echo=False)
+    answer = out["choices"][0]["text"].strip()
+
+    return answer
+
+response = Responce('''{prompt}
+                       ''')
+write_output("-filepath-", response)
+
+                       """.replace("-filepath-" , self.filepath).replace("{prompt}", self.prompt))
+            
+
     def make(self):
         self.Check_File()
 
@@ -66,12 +97,12 @@ class Work:
             lines = str(lines)
             if "use" in lines:
                 use_method = lines.split("use")[1]
-                print(use_method)
 
+            if "output-name" in lines:
+                self.output_name = (str(lines.split("=>")[1]).replace(" ", ""))
+            
             if "lang" in lines and "code" in use_method:
                 lang = lines.split("=>")[1]
-                print(lang)
-
             if "description" in lines:
                 values = []
                 is_here = False
@@ -100,9 +131,13 @@ class Work:
         if "code" in use_method:
             Prompt_string = f"make a {use_method} in programming language {lang} that satisfy these requirements\n{string_value}"
         else:
-            prompt_string = f"{string_value}"
-        print(Prompt_string)
-                
+            Prompt_string = f"{string_value}"
+        self.prompt = Prompt_string
+        
+        self.make_thread()
 
 
 Work("/workspaces/ALFRED/test2.line").make()
+'''
+print
+'''
