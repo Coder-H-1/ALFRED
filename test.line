@@ -1,0 +1,6 @@
+make code : 
+    specifics {
+        lang : python ;
+        description : To add two numbers ;
+    }
+

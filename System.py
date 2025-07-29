@@ -15,22 +15,24 @@ import os, sys
 
 # print(Responce("Make a hello world code in java"))
 
-output_Filename = "output.py"
-
+input_Filename:str = None
+function_to_perform:str = "create"
 
 if sys.argv:
-    Command = list(sys.argv)
-    
-    Command = Command.pop(0) # Removies filename
-
+    Command:list = list(sys.argv)
 
 
     if "create" in Command:
+        function_to_perform:str = "create"
         if "-f" in Command:
-            input_Filename =  Command[(int(Command.index("-f")) + 1)]
-        if "-o" in Command:
-            output_Filename = Command[(int(Command.index("-o")) + 1)]    
+            input_Filename:str =  Command[(int(Command.index("-f")) + 1)]
 
-            
+            if "\\" not in input_Filename:
+                input_Filename:str = f"{os.getcwd()}\\{input_Filename}"
+
 
         
+if input_Filename != None:
+    print(function_to_perform, input_Filename)
+
+    
