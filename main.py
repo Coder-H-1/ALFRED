@@ -4,7 +4,7 @@ from FILES.commands import process_command
 from FILES.reminder import start_background_reminder_thread
 from FILES.task_listener import listen_command
 from FILES.speaker import speak 
-
+from FILES.support.Main_GI import GUI_THREAD
 import os, sys
 
 COMMAND_INPUT = False
@@ -14,8 +14,7 @@ def Command() -> str:
         command = str(input(">> ")).lower()
     
     else:
-        command = listen_command()  
-        # command = str(input(">> ")).lower()  # to debug 
+        command = listen_command()
 
     return command
 
@@ -27,7 +26,8 @@ def main():
 
     while True:
         command = Command()
-
+        if command==None:
+            continue
         if "switch command" in command:
             if COMMAND_INPUT:
                 COMMAND_INPUT = False
@@ -45,15 +45,20 @@ def main():
             speak(response)
             break
 
-        if command:
-            system_action = process_command(command)
-            if system_action:
-                speak(system_action)
-            else:
-                response = butler_response(command)
-                speak(response)
+        system_action = process_command(command)
+        if system_action:
+            speak(system_action)
+        else:
+            response = butler_response(command)
+            speak(response)
+
 
 if __name__ == "__main__":
+    GUI_THREAD.start()
     start_background_reminder_thread()
-
-    main()
+    try:
+        main()
+    except Exception as Error:
+        print("EXITING DUE TO ERROR")
+        os.system("taskkill /f /im python32.exe")
+        os.system("taskkill /f /im python.exe")

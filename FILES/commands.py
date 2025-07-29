@@ -3,7 +3,6 @@ from FILES.utils import clear_Memory, get_date, get_time
 from FILES.reminder import set_reminder, parse_spoken_time, cancel_reminder,list_reminders
 from FILES.system_control import mute_volume, adjust_brightness, adjust_volume, set_brightness,set_volume
 from FILES.youtube_player import play_youtube_audio, stop_youtube_audio, VOLUME_youtube,set_volume_youtube
-
 from FILES.task_listener import listen_command
 from FILES.speaker import speak
 
@@ -11,7 +10,6 @@ import keyboard
 import os
 import re
 import webbrowser
-
 
 def process_command(command:str):
     command = EDIT(command, ["open", "start", "close" , "end"], ["$", "$" , "&" , "&"]).replace()
@@ -124,7 +122,10 @@ def process_command(command:str):
     elif "$ taskmanager" in command or "$ task manager" in command or "$ resource monitor" in command:
         keyboard.press_and_release("ctrl + shift + esc")
         return "Opening Task manager"
-
+    elif "& taskmanager" in command or "& task manager" in command or "& resource monitor" in command:
+        os.system()
+        return "Closing Task manager"
+    
     elif "$ note pad" in command or "$ notepad" in command:
         os.system("start notepad")
         return "Opening Notepad."
@@ -139,12 +140,12 @@ def process_command(command:str):
         os.system(f"taskkill /f /im cmd.exe")
         return "Closed all Command Prompt"
 
-
     elif "$ system information" in command:
         os.system("start dxdiag")
         return "Opening System Information."
     elif "& system information" in command:
         os.system("taskkill /f /im dxdiag.exe")
+        return "Closed system information"
     
     elif "clear screen" in command or "clear terminal" in command:
         os.system("cls")
@@ -159,33 +160,40 @@ def process_command(command:str):
         return "Opening Chrome."
     elif "& chrome" in command:
         os.system("taskkill /f /im chrome.exe")
+        return "Closed Chrome"
 
     elif "$ firefox" in command or "$ browser" in command:
         os.system("start firefox.exe")
     elif "& firefox" in command or "$ browser" in command:
         os.system(f"taskkill /f /im firefox.exe")
+        return "Closed Firefox"
 
     elif "$ calculator" in command:
         os.system("start calc")
         return "Opening Calculator."
     elif "& calculator" in command:
         os.system("taskkill /f /im calc.exe")
+        return "Closed Calculator"
 
     elif "$ workplace" in command or "$ workspace" in command or "$ work place" in command or "$ work space" in command:
-        webbrowser.open_new_tab("https:\\www.chatgpt.com")
+        webbrowser.open_new_tab("https://www.chatgpt.com")
+        webbrowser.open_new_tab("https://github.com/Coder-H-1")
         os.system(f"code {os.getcwd()}")
         return "Opening Workspace."
     elif "& workplace" in command or "& workspace" in command or "& work place" in command or "& work space" in command:
         os.system("taskkill /f /im code.exe")
+        return "Closed Workspace"
 
     elif "$ whatsapp" in command:
-        os.system("start shell:AppsFolder\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App")
+        os.system("start shell:AppsFolder\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App")
         return "Opening WhatsApp"
     elif "& whatsapp" in command:
         os.system("taskkill /f /im whatsapp.exe")
+        return "Closed WhatsApp"
     
-    elif "$ advance system settings" in command or "$ advance settings" in command or "$ system properties" in command:
+    elif "$ advanced system settings" in command or "$ advance settings" in command or "$ system properties" in command:
         os.system("start sysdm.cpl")
+        return "Opening Advanced System Settings"
 
     elif "check disk for errors" in command:
         os.system(f"chkdsk")
