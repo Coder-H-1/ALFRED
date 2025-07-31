@@ -13,7 +13,7 @@ ABOUT:
 *`launcher.pyw`* is a hotkey listener and works in background
 
 
-USES =>  *`llama_cpp`* for LLM in gguf format
+USES =>  *`llama_cpp`* for LLM in gguf format \
      =>  *`OpenHermes-2.5-mistril-7b.Q4_L_M.gguf`* (about 4.6 GB file) | due to my low specs laptop => 8GB RAM
 
 model link => `https://huggingface.co/TheBloke/OpenHermes-2.5-Mistral-7B-GGUF/tree/main`
