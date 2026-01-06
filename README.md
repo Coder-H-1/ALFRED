@@ -12,21 +12,19 @@ ABOUT:
 
 *`launcher.pyw`* is a hotkey listener and works in background
 
-\
-\
 
 USES    =>  *`llama_cpp`* for LLM in gguf format \
         =>  *`OpenHermes-2.5-mistril-7b.Q4_L_M.gguf`* ( about 4.6 GB file ) \
         =>  *`L3.1-Dark-Planet-SpinFire-Uncensored-8B-D_AU-Q4_k_m.gguf`* ( About 4.9 GB file ) \
         \
-        NOTE : I also used self fine-tuned Qwen2.5-0.5B-Instruct model converted to gguf format. 
+        NOTE : I also used self fine-tuned Qwen2.5-0.5B-Instruct model converted to gguf format. \
                
 
 Model links : 
     OperHermes model            : `[OpenHermes Model](https://huggingface.co/TheBloke/OpenHermes-2.5-Mistral-7B-GGUF)` \
     L3.1-Dark-Planet-SpinFire   : `[L3.1-Dark-Planet-SpinFire](https://huggingface.co/DavidAU/L3.1-Dark-Planet-SpinFire-Uncensored-8B-GGUF/)` \
     \
-    Self Fine-tuned Qwen        : `[Qwen2.5-0.5B](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct/)`                  
+    Self Fine-tuned Qwen        : `[Qwen2.5-0.5B](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct/)`    \              
 
 
 NOTE : Download A Converstional model like above and *move* it to `FILES\model`
