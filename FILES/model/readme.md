@@ -7,4 +7,4 @@ Download and move here conversational model in GGUF like
     model link : `https://huggingface.co/TheBloke/OpenHermes-2.5-Mistral-7B-GGUF`
 
 
-[NOTE: Needs atleast 8GB ram laptop/computer ]
+[ NOTE: Needs atleast 8GB ram laptop/computer ]
