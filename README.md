@@ -21,7 +21,7 @@ USES    =>  *`llama_cpp`* for LLM in gguf format \
                
 
 Model links : 
-    OperHermes model            : [`TheBloke/OpenHermes-2.5-Mistral-7B-GGUF/blob/main/openhermes-2.5-mistral-7b.Q4_K_M.gguf`](https://huggingface.co/TheBloke/OpenHermes-2.5-Mistral-7B-GGUF/blob/main/openhermes-2.5-mistral-7b.Q4_K_M.gguf) 
+    OperHermes model            : [`TheBloke/OpenHermes-2.5-Mistral-7B-GGUF`](https://huggingface.co/TheBloke/OpenHermes-2.5-Mistral-7B-GGUF/blob/main/openhermes-2.5-mistral-7b.Q4_K_M.gguf) 
     \
     L3.1-Dark-Planet-SpinFire   : [`DavidAU/L3.1-Dark-Planet-SpinFire-Uncensored`](https://huggingface.co/DavidAU/L3.1-Dark-Planet-SpinFire-Uncensored-8B-GGUF/blob/main/L3.1-Dark-Planet-SpinFire-Uncensored-8B-D_AU-Q4_k_m.gguf)
     \
