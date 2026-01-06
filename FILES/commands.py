@@ -1,17 +1,23 @@
-from FILES.text_editor import EDIT
+from FILES.util_functions import EDIT,  listen_command, speak
 from FILES.utils import clear_Memory, get_date, get_time
 from FILES.reminder import set_reminder, parse_spoken_time, cancel_reminder,list_reminders
 from FILES.system_control import mute_volume, adjust_brightness, adjust_volume, set_brightness,set_volume
 from FILES.youtube_player import play_youtube_audio, stop_youtube_audio, VOLUME_youtube,set_volume_youtube
-from FILES.task_listener import listen_command
-from FILES.speaker import speak
+from FILES.model_worker import ModelManager, MODELS
 
 import keyboard
 import os
 import re
 import webbrowser
 
-def process_command(command:str):
+
+model_Manager = ModelManager()
+
+def process_command(command:str) -> str:
+    "Executes command with certain keyword"
+
+    global VOLUME_youtube
+    
     command = EDIT(command, ["open", "start", "close" , "end"], ["$", "$" , "&" , "&"]).replace()
     
     if "remind me" in command:
@@ -62,17 +68,35 @@ def process_command(command:str):
             query = parts[1].replace("from youtube", "").replace("on youtube", "").strip()
             if query:
                 play_youtube_audio(query)
+                return "Done."
             else:
                 return ("Could you please repeat the song, sir?")
         else:
             return ("Please specify what you'd like to play, sir.")
 
-    elif "stop youtube" in command or "stop online music" in command:
+    elif "stop youtube" in command or "stop music" in command:
         return stop_youtube_audio()
+
+    elif "linux command" in command:
+        model_Manager.load_model(MODELS["linux command"], name="linux-commands", context_len=(len(command)+25))
+        answer = model_Manager.prompt(prompt=command, max_token=200)
+        model_Manager.unload_model()
+        return answer 
+
+    elif "linux tool" in command:
+        model_Manager.load_model(MODELS["linux tool"], name="linux-tools", context_len=(len(command)+25))
+        answer = model_Manager.prompt(prompt=command, max_token=200)
+        model_Manager.unload_model()
+        return answer
+
+    elif "quote" in command:
+        model_Manager.load_model(MODELS["quote"], name="quotes" , context_len=(len(command)+25))        
+        answer = model_Manager.prompt(prompt=command, max_token=250)
+        model_Manager.unload_model()
+        return answer
 
     elif "youtube volume" in command:
         global VOLUME_youtube
-        command = command.replace("youtube volume" , "")
         if "set" in command:
             for word in command.split():
                 if word.isdigit():
@@ -113,11 +137,11 @@ def process_command(command:str):
                 if word.isdigit():
                     return set_brightness(int(word))
 
-    elif "time" in command:
+    elif "time" in command and "what" in command:
         return get_time()
 
-    elif "date" in command or "day" in command:
-        return get_date()
+    elif "date" in command or "day" in command: 
+        if "what" in command: return get_date()
     
     elif "$ taskmanager" in command or "$ task manager" in command or "$ resource monitor" in command:
         keyboard.press_and_release("ctrl + shift + esc")
@@ -155,6 +179,13 @@ def process_command(command:str):
         keyboard.press_and_release("win + d")
         return "You are on Desktop now."
 
+    elif "$ code" in command: 
+        os.system("code")
+        return "Opening VS CODE"    
+    elif "& code" in command:
+        os.system("taskkill /f /im code.exe")
+        return "Closed VS CODE"
+    
     elif "$ chrome" in command:
         os.system("start chrome")
         return "Opening Chrome."
@@ -180,11 +211,12 @@ def process_command(command:str):
         webbrowser.open_new_tab("https://github.com/Coder-H-1")
         os.system(f"code {os.getcwd()}")
         return "Opening Workspace."
+    
     elif "& workplace" in command or "& workspace" in command or "& work place" in command or "& work space" in command:
         os.system("taskkill /f /im code.exe")
         return "Closed Workspace"
 
-    elif "$ whatsapp" in command:
+    elif "$ whatsapp" in command or "$ chats" in command:
         os.system("start shell:AppsFolder\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App")
         return "Opening WhatsApp"
     elif "& whatsapp" in command:
@@ -195,34 +227,35 @@ def process_command(command:str):
         os.system("start sysdm.cpl")
         return "Opening Advanced System Settings"
 
-    elif "check disk for errors" in command:
-        os.system(f"chkdsk")
-
     elif "$ computer settings" in command:
         keyboard.press_and_release("win + i")
         return "Opening Settings"
 
+    elif "$ youtube music" in command:
+        os.system("start chrome.exe https://music.youtube.com")
+        return "Opening Youtube Music in browser"
+
     elif "$ stack overflow" in command:
         webbrowser.open_new_tab("stackoverflow.com")
-        return "Opening stackoverflow.com"
+        return "Opening stackoverflow"
 
-    elif "$ google" in command:
+    elif "$ google" in command or "$ search" in command:
         webbrowser.open_new_tab("google.com")
-        return "Opening Google.com"
+        return "Opening Google"
     
-    elif "$ chatter" in command:
+    elif "$ chatter" in command or "$ chatgpt" in command:
         webbrowser.open_new_tab("chatgpt.com")
-        return "Opening ChatGPT.com"
+        return "Opening ChatGPT"
 
-    elif "shutdown computer" in command or "shut down the computer" in command:
+    elif "shutdown computer" in command or "shut down the computer" in command or "shutdown system" in command or "shutdown the system" in command:
         os.system("shutdown /s /t 1")
         return "Shutting down the system now."
 
-    elif "restart computer" in command:
+    elif "restart computer" in command or "restart the computer" in command or "restart system" in command or "restart the system" in command:
         os.system("shutdown /r /t 1")
         return "Restarting your machine, sir."
     
-    elif "clear memory" in command or "forget everything" in command:
+    elif "clear memory" in command or "forget everything" in command or "clear your memory" in command:
         clear_Memory()
         return "Cleared Memory at your command"
 
@@ -234,44 +267,54 @@ def process_command(command:str):
         else:
             return "Might I ask which file you’re looking for, sir?"
         
-    else: return None
+    else: 
+        return None
 
 
-def search_files(query: str, search_path="C:\\") -> str:
+def search_files(query: str, search_path="C:\\", is_commanded:bool=False, to_find:int=5) -> str:
     results = []
     query = query.lower()
 
-    speak("Allow me a moment to search, sir.")
+    if is_commanded!=True: speak("Allow me a moment, sir.")
 
     for root, dirs, files in os.walk(search_path):
-        print(dirs)
-        for file in files:
-            if query in file.lower():
-                results.append(os.path.join(root, file))
-                if len(results) >= 5:
-                    break
-        if len(results) >= 5:
-            break
+        print(f"{str(root).replace("\n", "")} \r")
+        if "C:\\Windows\\WinSxS" in root:
+            continue
+        else:
+            for file in files:
+                if query in file.lower():
+                    results.append(os.path.join(root, file))
+                    if len(results) >= to_find:
+                        break
+            if len(results) >= to_find:
+                break
+
+        
 
     if results:
-        speak("I found the following matches, sir:")
-        for idx, path in enumerate(results, 1):
-            print(f"{idx}. 📁 {path}")
+        if is_commanded:
+            for idx, path in enumerate(results, 1):
+                return path                   
+        else:    
+            speak("I found the following matches, sir:")
+            for idx, path in enumerate(results, 1):
+                print(f"{idx}. 📁 {path}")
 
-        speak("Shall I open the first result for you?")
-        confirmation = listen_command()
+            speak("Shall I open the first result for you?")
+            confirmation = listen_command()
 
-        if "cancel" in confirmation or "stop" in confirmation:
-            return "Understood, I won’t open anything."
+            if "cancel" in confirmation or "stop" in confirmation or confirmation == None:
+                return "Understood, I won’t open anything."
 
-        if "yes" in confirmation or "open" in confirmation:
-            try:
-                os.startfile(results[0])
-                return "Opening the file now."
-            except Exception as e:
-                return f"I'm afraid I couldn’t open it. The error was: {e}"
+            if "yes" in confirmation or "open" in confirmation:
+                try:
+                    os.startfile(results[0])
+                    return "Opening the file now."
+                except Exception as e:
+                    return f"I'm afraid I couldn’t open it. The error was: {e}"
 
-        return "Very well, I shall await further instructions."
+            return "Very well, I shall await further instructions."
     else:
         return "I'm afraid I found no matching files, sir."
 

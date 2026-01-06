@@ -1,13 +1,14 @@
 
-from FILES.utils import butler_response , get_greeting
+from FILES.utils import Responder , get_greeting, MEMORY
 from FILES.commands import process_command
 from FILES.reminder import start_background_reminder_thread
 from FILES.task_listener import listen_command
-from FILES.speaker import speak 
-from FILES.support.Main_GI import GUI_THREAD
+from FILES.speaker import speak
 import os, sys
 
-COMMAND_INPUT = False
+COMMAND_INPUT = True
+
+
 
 def Command() -> str:
     if COMMAND_INPUT:
@@ -21,6 +22,7 @@ def Command() -> str:
 def main():
     global COMMAND_INPUT
     speak("System is now fully operational.")
+    os.system("title ALFRED")
     os.system("cls")
     speak(get_greeting())
 
@@ -41,24 +43,23 @@ def main():
             sys.exit()
 
         if "exit" in command or "goodbye" in command or "bye alfred" in command:
-            response = butler_response("Bye alfred. Meet you soon.")
-            speak(response)
-            break
-
+            MEMORY.session_end()
+            speak(Responder("good day alfred. Now you may close yourself."))
+            sys.exit()
+            
+        
         system_action = process_command(command)
         if system_action:
             speak(system_action)
+            MEMORY.add_to_history(command, system_action)
         else:
-            response = butler_response(command)
-            speak(response)
+            response = Responder(command)
+            speak(response) 
 
 
 if __name__ == "__main__":
-    GUI_THREAD.start()
     start_background_reminder_thread()
     try:
         main()
-    except Exception as Error:
-        print("EXITING DUE TO ERROR")
-        os.system("taskkill /f /im python32.exe")
-        os.system("taskkill /f /im python.exe")
+    except Exception as error:
+        print(error)

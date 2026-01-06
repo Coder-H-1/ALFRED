@@ -1,8 +1,4 @@
-"""
-
-Have functions that controls computer's volume and screen brightness .
-
-"""
+# system_control.py
 
 import screen_brightness_control as sbc
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume

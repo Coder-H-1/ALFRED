@@ -2,7 +2,7 @@
 
 import vlc
 import yt_dlp
-from FILES.speaker import speak
+from FILES.util_functions import speak
 player = None
 VOLUME_youtube = 100
 
@@ -42,6 +42,8 @@ def stop_youtube_audio():
     if player:
         player.stop()
         return ("Stopped YouTube playback, sir.")
+    else:
+        return "Player not working, sir."
         
 
 def set_volume_youtube():

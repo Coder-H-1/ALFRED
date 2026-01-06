@@ -1,5 +1,7 @@
 """
 
+## PLACE A SHORTCUT OF THIS FILE IN "STARTUP MENU" FOLDER 
+
 Basically a hotkey detector that works in background (without a window)
 On start of launcher.pyw, a windows notification is sent.
 
@@ -15,7 +17,6 @@ import time
 from plyer import notification
 
 
-
 notification.notify(
     title="ALFRED Activated",
     message="Working now.",
@@ -29,7 +30,7 @@ notification.notify(
 def wait_for_hotkey():
     while True:
         keyboard.wait("alt+shift+a+s")  
-        time.sleep(0.1)  # Wait for sequential press
+        time.sleep(0.05)  # Wait for sequential press
         if keyboard.is_pressed("d"):
             subprocess.Popen(['python', "main.py"])
 

@@ -1,8 +1,0 @@
-
-use code 
-output-name => thing
-specifics 
-    lang => python
-    description => To make a simple basic algebric calculator example it should be able to find x in `x+3=5 > gives x=2` 
-    and also like `3x+2 = 11 > gives x=3`
-    

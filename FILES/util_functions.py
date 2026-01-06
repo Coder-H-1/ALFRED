@@ -1,0 +1,86 @@
+import requests
+
+def get_Data_state() -> bool:
+    try:
+        requests.get(f"https://www.google.com")
+        return True
+    except:
+        return False
+
+############################################################################################################################################33
+
+class EDIT:
+    def __init__(self, text:str, FROM_str:list, TO_str:list=None):
+        self.original_text  : str  = str(text).lower()
+        self.FROM_str       : list = list(FROM_str)
+        self.TO_str         : list = list(TO_str)
+    
+    def replace_to_none(self):
+        text = self.original_text
+        for i in range( int(len(self.FROM_str)) ):
+            text = text.replace( str(self.FROM_str[i]).lower() , "")
+
+        return text
+    
+    def replace(self):
+        text = self.original_text
+        for i in range( int(len(self.FROM_str)) ):
+            try:
+                text = text.replace( str(self.FROM_str[i]).lower() , str(self.TO_str[i]))
+            except: 
+                text = text.replace( str(self.FROM_str[i]).lower() , str(self.TO_str[0]))
+            
+
+        return text
+
+#######################################################################################################################################33
+
+import threading
+import pyttsx3
+
+_speak_lock = threading.Lock()
+SPEAK_ENGINE = pyttsx3.init("sapi5")
+SPEAK_VOICES = SPEAK_ENGINE.getProperty("voices")
+SPEECH_RATE = 170   
+
+
+def speak(text: str = None, speech_rate:int=SPEECH_RATE) -> None:
+    voice_index = 3 if len(SPEAK_VOICES) >= 3 else 0
+    SPEAK_ENGINE.setProperty("voice", SPEAK_VOICES[voice_index].id)
+    SPEAK_ENGINE.setProperty("rate" , speech_rate)
+
+            
+    if "sir" not in text.lower():
+        text = f"{text.rstrip('.')}, sir."
+    print(f"Alfred: {text}")
+    with _speak_lock:  # 🚨 Lock to avoid runtime crash
+        SPEAK_ENGINE.say(text)
+        SPEAK_ENGINE.runAndWait()
+
+######################################################################################################################
+
+import speech_recognition as sr
+from FILES.util_functions import get_Data_state
+
+
+# listen_commands configuration
+RECOGNIZER = sr.Recognizer()
+MIC = sr.Microphone()
+
+
+def listen_command() -> str:
+    r = sr.Recognizer()
+    while True:
+        with sr.Microphone() as source:
+            print(":> Listening (online)...")
+            audio = r.listen(source)
+
+        try:
+            print("Recognizing...")
+            query = r.recognize_google(audio, language="en-IN")
+            if query:
+                print(f"User said : {query}")
+                return str(query).lower()
+        except:
+            return None
+

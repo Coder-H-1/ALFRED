@@ -3,11 +3,11 @@ import time
 import json
 import os
 from datetime import datetime, timedelta
-from FILES.speaker import speak
+from FILES.util_functions import speak
 import dateparser
 
 REMINDERS = []
-REMINDER_FILE = "reminders.json"
+REMINDER_FILE = "FILES\\support\\reminders.json"
 
 NUM_WORDS = {
     "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,
