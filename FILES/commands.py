@@ -80,6 +80,7 @@ def process_command(command:str) -> str:
     ################################################################################################
 
     # NOTE: This code will only work for fine-tuned Qwen2.5-0.5-Instruct model     ; These functions were self trained by me 
+    # IF: you want to run these commands remove these elif statements -> goes to main ChatModel (heavy).      
 
     elif "linux command" in command:
         model_Manager.load_model(MODELS["linux command"], name="linux-commands", context_len=(len(command)+25))
@@ -98,6 +99,7 @@ def process_command(command:str) -> str:
         answer = model_Manager.prompt(prompt=command, max_token=250)
         model_Manager.unload_model()
         return answer
+    
     ################################################################################################
 
     elif "youtube volume" in command:

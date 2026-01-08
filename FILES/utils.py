@@ -31,8 +31,6 @@ except ModuleNotFoundError:
 from llama_cpp import Llama
 
 
-MEMORY = Memory()
-
 
 def get_time() -> str:
     now = datetime.datetime.now()

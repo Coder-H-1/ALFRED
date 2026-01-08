@@ -1,5 +1,7 @@
 
 class Memory:
+    "Memory of previous commands given by user"
+
     def __init__(self):
         self.store = {
             "user_name": "sir",
@@ -10,10 +12,14 @@ class Memory:
         self._calls = 0
 
     def remember(self, key, value):
+        "sets a key in self.store to value"
+
         self.store[key] = value
 
 
     def clean_history(self):
+        "Cleans every session conversions"
+            
         length = len(self.store["conversation_history"])
         for _ in range(length - (int(length/2))):
             self.store["conversation_history"].pop(0)
@@ -76,4 +82,4 @@ class Memory:
 
 
 
-
+MEMORY = Memory()
