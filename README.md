@@ -1,59 +1,175 @@
-# A.L.F.R.E.D
+# A.L.F.R.E.D  
+**Automatic LLM-Powered Functional Responsive Execution Daemon**
 
-This is a test chat-based responsive automatic command structured script based on pretrained LLM model.
+A.L.F.R.E.D is a chat-based, responsive, command-structured automation system powered by locally running pretrained Large Language Models (LLMs).  
+It is designed to function as a background assistant capable of understanding natural language commands and executing system-level actions on Windows.
 
-Inspired by `ALFRED Pennyworth` from `The Dark knight` movie
+Inspired by **Alfred Pennyworth** from *The Dark Knight*.
 
-Made Using => Python 3.12.6 64bit
-  
-ABOUT:
+---
 
-*`main.py`* file is the starting file
+## 📌 Project Overview
 
-*`launcher.pyw`* is a hotkey listener and works in background
+A.L.F.R.E.D acts as an intelligent automation layer between the user and the operating system.  
+It combines LLM inference, speech recognition, system control, and hotkey-based background execution into a single cohesive workflow.
+
+The project runs entirely locally using GGUF-format models via `llama_cpp`, ensuring privacy and offline functionality.
+
+---
+
+## 🧠 Key Capabilities
+
+- Chat-based command interpretation using local LLMs  
+- Background execution with hotkey triggers  
+- Speech recognition and text-to-speech support  
+- System automation (keyboard, mouse, volume, brightness, media, etc.)  
+- Media playback and YouTube downloading  
+- Date and time parsing for contextual commands  
+- Modular Python-based architecture  
+
+---
+
+## 📂 Project Structure
+
+    A.L.F.R.E.D/
+    │
+    ├── main.py # Primary application entry point
+    ├── launcher.pyw # Background hotkey listener (runs silently)
+    │
+    ├── FILES/
+    │ └── model/ # Place downloaded GGUF models here
+    │
+    └── README.md
 
 
-USES    =>  *`llama_cpp`* for LLM in gguf format \
-        =>  *`OpenHermes-2.5-mistril-7b.Q4_K_M.gguf`* ( about 4.6 GB file ) \
-        =>  *`L3.1-Dark-Planet-SpinFire-Uncensored-8B-D_AU-Q4_k_m.gguf`* ( About 4.9 GB file ) \
-        \
-        NOTE : I also used self fine-tuned Qwen2.5-0.5B-Instruct model converted to gguf format. \
-               
+---
 
-Model links : 
-    OperHermes model            : [`TheBloke/OpenHermes-2.5-Mistral-7B-GGUF`](https://huggingface.co/TheBloke/OpenHermes-2.5-Mistral-7B-GGUF/blob/main/openhermes-2.5-mistral-7b.Q4_K_M.gguf) 
-    \
-    L3.1-Dark-Planet-SpinFire   : [`DavidAU/L3.1-Dark-Planet-SpinFire-Uncensored`](https://huggingface.co/DavidAU/L3.1-Dark-Planet-SpinFire-Uncensored-8B-GGUF/blob/main/L3.1-Dark-Planet-SpinFire-Uncensored-8B-D_AU-Q4_k_m.gguf)
-    \
-    Self Fine-tuned Qwen        : [`Qwen2.5-0.5B-Instruct`](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct/tree/main)               
+## 🚀 Entry Points
+
+- **main.py**  
+  The main execution file. Initializes the LLM, handles command parsing, and executes actions.
+
+- **launcher.pyw**  
+  Runs in the background as a hotkey listener and launches A.L.F.R.E.D without opening a console window.
+
+---
+
+## 🤖 Supported LLM Models
+
+The project uses GGUF-format models with `llama_cpp`.
+
+### Pre-tested Models
+
+- **OpenHermes-2.5-Mistral-7B (Q4_K_M)**  
+  ~4.6 GB  
+  https://huggingface.co/TheBloke/OpenHermes-2.5-Mistral-7B-GGUF
+
+- **L3.1 Dark Planet – SpinFire Uncensored 8B (Q4_K_M)**  
+  ~4.9 GB  
+  https://huggingface.co/DavidAU/L3.1-Dark-Planet-SpinFire-Uncensored-8B-GGUF
+
+- **Self Fine-Tuned Qwen2.5-0.5B-Instruct (GGUF)**  
+  Converted from the base model:  
+  https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct
+
+> **Important:**  
+> Download a conversational GGUF model and move it to:
+    FILES/model/
 
 
-NOTE : Download A Converstional model like above and *move* it to `FILES\model`
+---
 
+## 🛠️ System Requirements
 
-*PYTHON MODULES* used:
+- **Operating System:** Windows  
+- **Python Version:** Python 3.12.6 (64-bit)  
+- **Architecture:** x86-64 CPU (no GPU required)
 
-FOR => WINDOWS Python 3.12.6 x86-64 architecture CPU:
+---
 
-*Names of modules*
-    llama-cpp-python, keyboard, pyautogui, speechRecognition, pycaw, pyttsx3, \
-    vosk, pyaudio, requests, vlc, yt_dlp, screen_brightness_control, dateparser
+## 📦 Python Dependencies
 
+### Core Modules Used
 
-To download them use:  [CMD/PowerShell]
+    llama-cpp-python    
+    keyboard
+    pyautogui
+    speechRecognition
+    pycaw
+    pyttsx3
+    vosk
+    pyaudio
+    requests
+    python-vlc
+    yt_dlp
+    screen_brightness_control
+    dateparser
 
+---
+
+## 📥 Installation
+
+### Standard Installation (CMD / PowerShell)
 
     pip install keyboard pyautogui speechRecognition pycaw pyttsx3 requests python-vlc yt_dlp screen_brightness_control dateparser
 
 
-For `llama-cpp-python` and `pyaudio` if you are getting an CMAKE error or something else :
+---
+
+### llama-cpp-python (CPU-only, prebuilt wheels)
+
+If you encounter CMake or build errors:
 
     pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu --prefer-binary
-    
-    pip install pyaudio --extra-index-url https://files.pythonhosted.org/packages/b0/6a/d25812e5f79f06285767ec607b39149d02aa3b31d50c2269768f48768930/PyAudio-0.2.14-cp312-cp312-win_amd64.whl 
-    
 
-[PRELOADED / INTERNAL] <-: already included in python installation
+---
 
-    os, sys, threading, subprocess, time, json, datetime
+### PyAudio (Windows Python 3.12 Fix)
+    pip install pyaudio --extra-index-url https://files.pythonhosted.org/packages/b0/6a/d25812e5f79f06285767ec607b39149d02aa3b31d50c2269768f48768930/PyAudio-0.2.14-cp312-cp312-win_amd64.whl
 
+
+---
+
+## 🧩 Built-in Python Modules
+
+The following modules are preloaded with Python:
+
+    os
+    sys
+    threading
+    subprocess
+    time
+    json
+    datetime
+
+
+---
+
+## 🔐 Privacy & Offline Usage
+
+- All inference is performed locally  
+- No external APIs are required  
+- No telemetry or cloud dependency  
+- Fully offline after model download  
+
+---
+
+## 📖 Inspiration
+
+> “Some men just want to watch the world burn.”  
+> — Alfred Pennyworth, *The Dark Knight*
+
+A.L.F.R.E.D is built as a personal automation assistant—quiet, efficient, and always ready in the background.
+
+---
+
+## ⚠️ Disclaimer
+
+This project is intended for educational and experimental purposes.  
+Users are responsible for the commands executed by the system.
+
+---
+
+## 📌 Status
+
+    Active Development / Experimental
