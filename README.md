@@ -1,10 +1,10 @@
 # A.L.F.R.E.D  
-**Automatic LLM-Powered Functional Responsive Execution Daemon**
+**Automated Limited Functionality Responsive Educational Development (system). or A.L.F.R.E.D.**
 
 A.L.F.R.E.D is a chat-based, responsive, command-structured automation system powered by locally running pretrained Large Language Models (LLMs).  
 It is designed to function as a background assistant capable of understanding natural language commands and executing system-level actions on Windows.
 
-Inspired by **Alfred Pennyworth** from *The Dark Knight*.
+Name inspired by **Alfred Pennyworth** from *The Dark Knight*.
 
 ---
 

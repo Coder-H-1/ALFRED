@@ -1,6 +1,6 @@
-import gc
+import gc, os 
 from llama_cpp import Llama
-
+from util_functions import speak
 
 MODELS = {
     "linux command" : "FILES\\model\\qwen-linux-q8_0.gguf",
@@ -15,6 +15,7 @@ class ModelManager:
         self.current_model_name = None
 
     def load_model(self, model_path:str, name:str, context_len: int) -> None:
+        if os.path.exists(model_path)!=True: speak("You currently don't have model for specified function. ")
         if self.model is not None:
             self.unload_model()
 

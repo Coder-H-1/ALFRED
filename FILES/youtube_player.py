@@ -4,7 +4,7 @@ import vlc
 import yt_dlp
 from FILES.util_functions import speak
 player = None
-VOLUME_youtube = 100
+VOLUME_YOUTUBE = 100
 
 def play_youtube_audio(url_or_query):
     global player

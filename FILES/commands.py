@@ -2,8 +2,8 @@ from FILES.util_functions import EDIT,  listen_command, speak
 from FILES.utils import clear_Memory, get_date, get_time
 from FILES.reminder import set_reminder, parse_spoken_time, cancel_reminder,list_reminders
 from FILES.system_control import mute_volume, adjust_brightness, adjust_volume, set_brightness,set_volume
-from FILES.youtube_player import play_youtube_audio, stop_youtube_audio, VOLUME_youtube,set_volume_youtube
-from FILES.model_worker import ModelManager, MODELS
+from FILES.youtube_player import play_youtube_audio, stop_youtube_audio, VOLUME_YOUTUBE,set_volume_youtube
+from FILES.model_manager import ModelManager, MODELS
 
 import keyboard
 import os
@@ -16,7 +16,7 @@ model_Manager = ModelManager()
 def process_command(command:str) -> str:
     "Executes command with certain keyword"
 
-    global VOLUME_youtube
+    global VOLUME_YOUTUBE
     
     command = EDIT(command, ["open", "start", "close" , "end"], ["$", "$" , "&" , "&"]).replace()
     
@@ -77,6 +77,10 @@ def process_command(command:str) -> str:
     elif "stop youtube" in command or "stop music" in command:
         return stop_youtube_audio()
 
+    ################################################################################################
+
+    # NOTE: This code will only work for fine-tuned Qwen2.5-0.5-Instruct model     ; These functions were self trained by me 
+
     elif "linux command" in command:
         model_Manager.load_model(MODELS["linux command"], name="linux-commands", context_len=(len(command)+25))
         answer = model_Manager.prompt(prompt=command, max_token=200)
@@ -94,24 +98,25 @@ def process_command(command:str) -> str:
         answer = model_Manager.prompt(prompt=command, max_token=250)
         model_Manager.unload_model()
         return answer
+    ################################################################################################
 
     elif "youtube volume" in command:
         global VOLUME_youtube
         if "set" in command:
             for word in command.split():
                 if word.isdigit():
-                    VOLUME_youtube = int(word)
+                    VOLUME_YOUTUBE = int(word)
                     set_volume_youtube()
-                    return f"Youtube's volume is now set to : {VOLUME_youtube}"
+                    return f"Youtube's volume is now set to : {VOLUME_YOUTUBE}"
                 else:
                     return "Couldn't set volume could you please repeat the command, sir."
 
         if "increase" in command:
-            VOLUME_youtube += 10
+            VOLUME_YOUTUBE += 10
             set_volume_youtube()
             return f"Youtube volume is now set to : {VOLUME_youtube} %"
         elif "decrease" in command:
-            VOLUME_youtube -= 10
+            VOLUME_YOUTUBE -= 10
             set_volume_youtube()
             return f"Youtube volume is now set to : {VOLUME_youtube} %"
 
