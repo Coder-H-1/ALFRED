@@ -1,3 +1,8 @@
+
+# A HARD coded reminder function
+# Only GOD know what is happening
+
+
 import threading
 import time
 import json
@@ -6,8 +11,8 @@ from datetime import datetime, timedelta
 from FILES.util_functions import speak
 import dateparser
 
-REMINDERS = []
-REMINDER_FILE = "FILES\\support\\reminders.json"
+REMINDERS = []  ## Stores Reminders 
+REMINDER_FILE = "FILES\\support\\reminders.json" 
 
 NUM_WORDS = {
     "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,

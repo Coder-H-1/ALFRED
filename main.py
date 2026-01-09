@@ -2,25 +2,23 @@
 from FILES.utils import Responder , get_greeting, MEMORY
 from FILES.commands import process_command
 from FILES.reminder import start_background_reminder_thread
-from FILES.task_listener import listen_command
-from FILES.speaker import speak
+from FILES.util_functions import listen_command, speak
 import os, sys
 
-COMMAND_INPUT = True
-
-
+COMMAND_INPUT = False  # True -> listen_command() ; False -> CLI (Command Line Interface) 
 
 def Command() -> str:
+    "Takes command from specified source"
     if COMMAND_INPUT:
         command = str(input(">> ")).lower()
-    
     else:
         command = listen_command()
 
     return command
 
-def main():
+def main() -> None:
     global COMMAND_INPUT
+
     speak("System is now fully operational.")
     os.system("title ALFRED")
     os.system("cls")
@@ -53,8 +51,7 @@ def main():
             speak(system_action)
             MEMORY.add_to_history(command, system_action)
         else:
-            response = Responder(command)
-            speak(response) 
+            speak( Responder(command) ) 
 
 
 if __name__ == "__main__":

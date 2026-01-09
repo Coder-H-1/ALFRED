@@ -1,4 +1,5 @@
 
+
 class Memory:
     "Memory of previous commands given by user"
 
@@ -16,7 +17,6 @@ class Memory:
 
         self.store[key] = value
 
-
     def clean_history(self):
         "Cleans every session conversions"
             
@@ -25,9 +25,13 @@ class Memory:
             self.store["conversation_history"].pop(0)
             
     def recall(self, key):
+        "Stores value to key in (self.store)"
+
         return self.store.get(key, "")
 
     def add_to_history(self, prompt, response) -> None:
+        "Adds (user_input and reply) to history"
+
         self.store["conversation_history"].append((prompt, response))
         self.store["session_history"].append((prompt, response))
 
@@ -39,17 +43,15 @@ class Memory:
         self._calls += 1
 
     def get_history(self) -> str:
-        """
-        Returns session chats in string 
-        """
+        " Returns session chats in string"
+
         return "\n".join(
             f"User: {q}\nButler: {a}" for q, a in self.store["conversation_history"]
         )
     
     def session_end(self) -> None:
-        """
-        writes entries to the file of chats of a session end.
-        """
+        "writes entries to the file of chats of a session end."
+
         History = "\n".join(
             f"User: {q} > Butler: {a}" for q, a in self.store["session_history"]
         )
@@ -82,4 +84,5 @@ class Memory:
 
 
 
-MEMORY = Memory()
+
+MEMORY = Memory() # Creates Global Memory Object

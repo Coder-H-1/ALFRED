@@ -94,6 +94,8 @@ The project uses GGUF-format models with `llama_cpp`.
     llama-cpp-python    
     keyboard
     pyautogui
+    win32gui
+    plyer
     speechRecognition
     pycaw
     pyttsx3
@@ -111,7 +113,7 @@ The project uses GGUF-format models with `llama_cpp`.
 
 ### Standard Installation (CMD / PowerShell)
 
-    pip install keyboard pyautogui speechRecognition pycaw pyttsx3 requests python-vlc yt_dlp screen_brightness_control dateparser
+    pip install keyboard plyer pyautogui speechRecognition win32gui pycaw pyttsx3 requests python-vlc yt_dlp screen_brightness_control dateparser
 
 
 ---
@@ -124,7 +126,7 @@ If you encounter CMake or build errors:
 
 ---
 
-### PyAudio (Windows Python 3.12 Fix)
+### PyAudio (Windows Python 3.12)
     pip install pyaudio --extra-index-url https://files.pythonhosted.org/packages/b0/6a/d25812e5f79f06285767ec607b39149d02aa3b31d50c2269768f48768930/PyAudio-0.2.14-cp312-cp312-win_amd64.whl
 
 

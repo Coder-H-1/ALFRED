@@ -10,15 +10,23 @@ import os
 import re
 import webbrowser
 
+def process_command(command:str) -> str:...
+def search_file(query: str, search_path="C:\\", is_commanded:bool=False, to_find:int=5) -> str:...
 
-model_Manager = ModelManager()
+
+model_Manager = ModelManager() 
+                # .load_model(model_path:str, name:str, context_len: int) 
+                # .unload_model() 
+                # .prompt(prompt:str, max_token:int)
 
 def process_command(command:str) -> str:
     "Executes command with certain keyword"
 
     global VOLUME_YOUTUBE
     
-    command = EDIT(command, ["open", "start", "close" , "end"], ["$", "$" , "&" , "&"]).replace()
+    command = EDIT(
+        str(command), FROM_str=["open", "start", "close" , "end"], TO_str=["$", "$" , "&" , "&"]
+        ).replace()
     
     if "remind me" in command:
         match = re.search(r"remind me to (.+?) in (.+)", command)
@@ -309,7 +317,7 @@ def search_files(query: str, search_path="C:\\", is_commanded:bool=False, to_fin
                 print(f"{idx}. 📁 {path}")
 
             speak("Shall I open the first result for you?")
-            confirmation = listen_command()
+            confirmation:str = listen_command()
 
             if "cancel" in confirmation or "stop" in confirmation or confirmation == None:
                 return "Understood, I won’t open anything."

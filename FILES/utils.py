@@ -24,9 +24,9 @@ Working:
 import os
 import datetime
 
-try: from FILES.memory import Memory
+try: from FILES.memory import Memory, MEMORY
 except ModuleNotFoundError: 
-    from memory import Memory
+    from memory import Memory, MEMORY
 
 from llama_cpp import Llama
 

@@ -8,19 +8,25 @@ MODELS = {
     "linux command" : "FILES\\model\\qwen-linux-q8_0.gguf",
     "quote" : "FILES\\model\\quotes_q8_0.gguf", 
     "linux tool" : "FILES\\model\\linux_tools_q8_0.gguf"
-} 
+} # Model paths 
 
 
 class ModelManager:
+    "Manages model"
+    
     def __init__(self) -> None:
+        assert print("HEHE") 
         self.model = None
         self.current_model_name = None
 
     def load_model(self, model_path:str, name:str, context_len: int) -> None:
+        "Loads model as object in (self.model)"
+
         if os.path.exists(model_path)!=True: speak("You currently don't have model for specified function. I don't actually know what to do."); return
         if self.model is not None:
             self.unload_model()
 
+        
         print(f"[manager] Loading model: {name}")
         self.model = Llama(
             model_path=model_path,
@@ -32,6 +38,8 @@ class ModelManager:
         self.current_model_name = name
 
     def unload_model(self) -> None:
+        "Unloads and deletes (self.model) object and runs Garbage collector"
+
         print(f"[manager] Unloading model: {self.current_model_name}")
         del self.model
         self.model = None
@@ -39,6 +47,8 @@ class ModelManager:
         gc.collect()
 
     def prompt(self, prompt:str, max_token:int) -> str:
+        "Prompts the loaded (self.model) and returns string"
+
         if self.model:
             output = self.model(
                 prompt,
