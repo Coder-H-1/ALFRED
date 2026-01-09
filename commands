@@ -1,0 +1,5 @@
+# bash-commands for simple and fast debugging ; for personal use   ;
+# use -> "source commands" to implement
+alias cls="clear"
+alias run="python main.py"
+alias update="sudo apt update && sudo apt upgrade"
