@@ -15,7 +15,6 @@ class ModelManager:
     "Manages model"
     
     def __init__(self) -> None:
-        assert print("HEHE") 
         self.model = None
         self.current_model_name = None
 

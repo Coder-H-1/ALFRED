@@ -10,10 +10,6 @@ import os
 import re
 import webbrowser
 
-def process_command(command:str) -> str:...
-def search_file(query: str, search_path="C:\\", is_commanded:bool=False, to_find:int=5) -> str:...
-
-
 model_Manager = ModelManager() 
                 # .load_model(model_path:str, name:str, context_len: int) 
                 # .unload_model() 
@@ -284,7 +280,6 @@ def process_command(command:str) -> str:
         
     else: 
         return None
-
 
 def search_files(query: str, search_path="C:\\", is_commanded:bool=False, to_find:int=5) -> str:
     results = []

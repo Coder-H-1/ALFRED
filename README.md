@@ -127,8 +127,8 @@ If you encounter CMake or build errors:
 ---
 
 ### PyAudio (Windows Python 3.12)
-    pip install pyaudio --extra-index-url https://files.pythonhosted.org/packages/b0/6a/d25812e5f79f06285767ec607b39149d02aa3b31d50c2269768f48768930/PyAudio-0.2.14-cp312-cp312-win_amd64.whl
 
+    pip install pyaudio --extra-index-url https://files.pythonhosted.org/packages/b0/6a/d25812e5f79f06285767ec607b39149d02aa3b31d50c2269768f48768930/PyAudio-0.2.14-cp312-cp312-win_amd64.whl
 
 ---
 
@@ -161,7 +161,7 @@ The following modules are preloaded with Python:
 > “Some men just want to watch the world burn.”  
 > — Alfred Pennyworth, *The Dark Knight*
 
-A.L.F.R.E.D is built as a personal automation assistant—quiet, efficient, and always ready in the background.
+**A.L.F.R.E.D** is built as a personal automation assistant—quiet, efficient, and always ready in the background.
 
 ---
 
