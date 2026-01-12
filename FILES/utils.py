@@ -6,7 +6,7 @@ Functions:
     get_date() -> str
     get_greeting() -> str
     clear_Memory() -> None
-    butler_response(query: str) -> str
+    Response(query: str) -> str
 
     Note : 'query' is the input given by the user (either through voice input or from text input)
 
@@ -20,29 +20,24 @@ Working:
     
 """
 
-
 import os
 import datetime
 
 try: from FILES.memory import Memory, MEMORY
-except ModuleNotFoundError: 
-    from memory import Memory, MEMORY
+except ModuleNotFoundError: from memory import Memory, MEMORY     ## for util file debugging
 
 from llama_cpp import Llama
 
 
-
-def get_time() -> str:
+def get_time() -> str: ## Checks Time > returns a string ("It is %I:%M %p, sir")
     now = datetime.datetime.now()
     return now.strftime("It is %I:%M %p, sir.")  # 12-hour format
 
-
-def get_date() -> str:
+def get_date() -> str:  ## Checks Date > returns a string ("Today is %A, %d %B %Y.") 
     today = datetime.datetime.now()
     return today.strftime("Today is %A, %d %B %Y.")
 
-
-def get_greeting() -> str:
+def get_greeting() -> str: ## Greets user
     hour = datetime.datetime.now().hour
 
     _time = get_time().replace("It is ", "The time is ").replace(", sir." , "")
@@ -60,22 +55,30 @@ def get_greeting() -> str:
     MEMORY.add_to_history(Time_and_Date, greet)
     return greet
     
-
-def clear_Memory() -> None: MEMORY.clean_history()
-
+def clear_Memory() -> None: MEMORY.clean_history()  # Clears all the previous Session chat history
 
 # FOR LLM
 
-def get_optimal_threads(reserve=2) -> int:
-    total = os.cpu_count()
-    threads = max(1, total - reserve)
+def get_optimal_threads(reserve=2) -> int: ## For CPU usage control  > reserves atleast 2 cpu cores for Operating System 
+    total:int = os.cpu_count()
+    threads:int = max(1, total - reserve)
     print(f":> Using {threads} threads out of {total} logical cores.")
     return int(threads)
 
+MODEL_PATH:str = "FILES/model/*Name_model.gguf"  ### Change *Name_model if you want to use 1  
+def determine_model_path() -> str:
+    global MODEL_PATH
+    
 
-MODEL_PATH = "FILES/model/L3.1-Dark-Planet-SpinFire-Uncensored-8B-D_AU-Q4_k_m.gguf"
 
-LLM = Llama( model_path=MODEL_PATH, n_ctx=3072, n_threads=get_optimal_threads(), verbose=False )
+
+
+LLM = Llama( 
+    model_path=MODEL_PATH,
+    n_ctx=3072,
+    n_threads=get_optimal_threads(),
+    verbose=False 
+    )
 
 def Answer_length(text:str) -> int:
     if "in brief" in text or "in detail" in text or "have a lot of time" in text:

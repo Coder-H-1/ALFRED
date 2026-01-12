@@ -1,3 +1,5 @@
+########################################################################################################################################
+### > Internet ###
 import requests
 
 def get_Data_state() -> bool:
@@ -9,7 +11,8 @@ def get_Data_state() -> bool:
     except:
         return False
 
-############################################################################################################################################33
+########################################################################################################################################
+### > Text editing ###
 
 class EDIT:
     "Used to edit a list of strings in a sentence without using str.replace() function"
@@ -41,7 +44,8 @@ class EDIT:
 
         return text
 
-#######################################################################################################################################33
+#########################################################################################################################################
+### Speech ###
 
 import threading
 import pyttsx3
@@ -55,8 +59,8 @@ SPEECH_RATE = 170
 def speak(text: str = None, speech_rate:int=SPEECH_RATE) -> None:
     "Text to Speech function"
 
-    voice_index = 3 if len(SPEAK_VOICES) >= 3 else 0
-    SPEAK_ENGINE.setProperty("voice", SPEAK_VOICES[voice_index].id)
+    voice_index = (3 if len(SPEAK_VOICES) >= 3 else 0)  # I have male British English Language pack at number 3; 0 > Microsoft default male voice  
+    SPEAK_ENGINE.setProperty("voice", SPEAK_VOICES[voice_index].id) 
     SPEAK_ENGINE.setProperty("rate" , speech_rate)
 
             
@@ -66,10 +70,11 @@ def speak(text: str = None, speech_rate:int=SPEECH_RATE) -> None:
     print(f"Alfred: {text}")
 
     with _speak_lock:  # Lock to avoid runtime crash
-        SPEAK_ENGINE.say(text)
+        SPEAK_ENGINE.say(text)  
         SPEAK_ENGINE.runAndWait()
 
 ######################################################################################################################
+### > Speech Recognition
 
 import speech_recognition as sr
 
@@ -93,4 +98,6 @@ def listen_command() -> str:
                 return str(query).lower()
         except:
             return None
+
+######################################################################################################################
 

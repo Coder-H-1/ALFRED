@@ -22,6 +22,7 @@ class ModelManager:
         "Loads model as object in (self.model)"
 
         if os.path.exists(model_path)!=True: speak("You currently don't have model for specified function. I don't actually know what to do."); return
+        
         if self.model is not None:
             self.unload_model()
 
@@ -34,7 +35,7 @@ class ModelManager:
             n_batch=256,
             verbose=False,
         )
-        self.current_model_name = name
+        self.current_model_name = str(name)
 
     def unload_model(self) -> None:
         "Unloads and deletes (self.model) object and runs Garbage collector"
