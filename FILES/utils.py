@@ -14,7 +14,7 @@ Working:
     It creates an object called `MEMORY` -> Controls and recalls chat history
 
     It creates another object called `LLM` -> load LLaMa model 
-                :-> n_ctx       = 6144   (tokens input)
+                :-> n_ctx       = 2048        (tokens input)
                 :-> max_token   = 100         (token output per prompt)
 
     
@@ -65,42 +65,22 @@ def get_optimal_threads(reserve=2) -> int: ## For CPU usage control  > reserves 
     print(f":> Using {threads} threads out of {total} logical cores.")
     return int(threads)
 
-MODEL_PATH:str = "FILES/model/*Name_model.gguf"  ### Change *Name_model if you want to use 1  
-def determine_model_path() -> str:
-    global MODEL_PATH
-    
-
-
-
-
-LLM = Llama( 
+MODEL_PATH:str = "FILES/model/*Model_name.gguf"  ### Change Model_Name if you want to use 1  
+  
+LLM: object = Llama(        ### loads LLM model using LLama class
     model_path=MODEL_PATH,
     n_ctx=3072,
     n_threads=get_optimal_threads(),
     verbose=False 
     )
 
-def Answer_length(text:str) -> int:
-    if "in brief" in text or "in detail" in text or "have a lot of time" in text:
-        text = text.replace("in detail", "").replace("have a lot of time" , "").replace("in brief" , "")
-        return 250, text
-    
-    elif "in short" in text or "just short" in text or "i am in a hurry" in text:
-        text = text.replace("in short", "").replace("just short" , "").replace("i am in a hurry" , "")
-        return 75, text
-    
-    else:
-        return 150, text
+def Responder(prompt: str) -> str: ### Reponds user query
 
+    MEMORY.remember("last_command", prompt) ### sets key = "last_command" to value = (prompt)
 
-
-def Responder(prompt: str) -> str:
-
-    MEMORY.remember("last_command", prompt)
-
-    history : str = MEMORY.get_history()   ## Chat History
+    history: str = MEMORY.get_history()   ## Chat History
      
-    inject = (
+    inject:str = (
         "Full Name : Automated Limited Functionality Responsive Educational Development (system). or ALFRED.\n"
         "Work : Replay user with polite, relevant and brief answers.\n"
         "Functionality : ALFRED is programmed with multiple assistance system included text generation, open-closing applications and many more.\n "
@@ -108,22 +88,20 @@ def Responder(prompt: str) -> str:
         f"User said: {prompt}\nALFRED: "
     )
 
-    Answer_LENGTH, prompt =  Answer_length(prompt)
-
-    out = LLM(inject , max_tokens = Answer_LENGTH, stop=["User:", "Butler:"], echo=False)
-    answer : str = out["choices"][0]["text"].strip()
+    out: object = LLM(inject , max_tokens = 150, stop=["User:", "Butler:"], echo=False)
+    answer: str = out["choices"][0]["text"].strip()
     
     if "User said" in answer:
-        try: answer :str = answer.split("User said")[0]
+        try: answer: str = answer.split("User said")[0]
         except: pass
 
-    answer : str = answer.replace("Assistant:" , "").replace("ALFRED:" , "")
+    answer: str = answer.replace("Assistant:" , "").replace("ALFRED:" , "")
     MEMORY.add_to_history(prompt, answer)
     return answer
 
 if __name__ == "__main__":
 
     while True:
-        text = str(input(">> ")).strip()
+        text:str = str(input(">> ")).strip()
         print(Responder(text)) 
 
