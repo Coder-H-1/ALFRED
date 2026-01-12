@@ -2,7 +2,7 @@
 ### > Internet ###
 import requests
 
-def get_Data_state() -> bool:
+def get_Data_state() -> bool:  ###  Checks internet state
     "Checks if internet is connected or not -> returns True/False"
 
     try:
@@ -14,7 +14,7 @@ def get_Data_state() -> bool:
 ########################################################################################################################################
 ### > Text editing ###
 
-class EDIT:
+class EDIT:  ### Used to edit a list of strings in a sentence without using str.replace() function
     "Used to edit a list of strings in a sentence without using str.replace() function"
 
     def __init__(self, text:str, FROM_str:list, TO_str:list=None) -> None:
@@ -53,10 +53,10 @@ import pyttsx3
 _speak_lock = threading.Lock()
 SPEAK_ENGINE = pyttsx3.init("sapi5")
 SPEAK_VOICES = SPEAK_ENGINE.getProperty("voices")
-SPEECH_RATE = 170   
+SPEECH_RATE = 170
 
 
-def speak(text: str = None, speech_rate:int=SPEECH_RATE) -> None:
+def speak(text: str = None, speech_rate:int=SPEECH_RATE) -> None:  ### Speaks the text given
     "Text to Speech function"
 
     voice_index = (3 if len(SPEAK_VOICES) >= 3 else 0)  # I have male British English Language pack at number 3; 0 > Microsoft default male voice  
@@ -83,16 +83,17 @@ RECOGNIZER = sr.Recognizer()
 MIC = sr.Microphone()
     
 
-def listen_command() -> str:
+def listen_command() -> str:   ### Listens the user speech using speech_recognition
     r = sr.Recognizer()
     while True:
         with sr.Microphone() as source:
-            print(":> Listening (online)...")
-            audio = r.listen(source)
+            print(":> Listening...")
+            audio = r.listen(source) 
+            # audio = r.listen(source, 7, 10)  # use this if program is listening continously and not leaving loop and comment the previous variable 
 
         try:
             print("Recognizing...")
-            query = r.recognize_google(audio, language="en-IN")
+            query = r.recognize_google(audio, language="en-IN")  ## Uses online google voice recognition system for Speech to Text
             if query:
                 print(f"User said : {query}")
                 return str(query).lower()

@@ -1,6 +1,7 @@
 
 # A HARD coded reminder function
-# Only GOD know what is happening
+
+# Only GOD knows what is happening
 
 
 import threading

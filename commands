@@ -4,7 +4,7 @@
 alias cls="clear"
 alias run="python3 "
 alias update="sudo apt update && sudo apt upgrade"
-alias download="pip install keyboard pyautogui speechRecognition pycaw pyttsx3 requests python-vlc yt_dlp screen_brightness_control dateparser \
+alias download="pip install keyboard pyautogui plyer speechRecognition pycaw pyttsx3 requests python-vlc yt_dlp screen_brightness_control dateparser \
                 && pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu --prefer-binary \
                 && echo done!"
 

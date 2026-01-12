@@ -22,8 +22,9 @@ Working:
 
 import os
 import datetime
+import random
 
-try: from FILES.memory import Memory, MEMORY
+try: from FILES.memory import Memory, MEMORY    # Do not remove Memory from here ; many functions uses it 
 except ModuleNotFoundError: from memory import Memory, MEMORY     ## for util file debugging
 
 from llama_cpp import Llama
@@ -80,7 +81,7 @@ def Responder(prompt: str) -> str: ### Reponds user query
 
     history: str = MEMORY.get_history()   ## Chat History
      
-    inject:str = (
+    inject: str = (  ### Prompt 
         "Full Name : Automated Limited Functionality Responsive Educational Development (system). or ALFRED.\n"
         "Work : Replay user with polite, relevant and brief answers.\n"
         "Functionality : ALFRED is programmed with multiple assistance system included text generation, open-closing applications and many more.\n "
@@ -88,8 +89,8 @@ def Responder(prompt: str) -> str: ### Reponds user query
         f"User said: {prompt}\nALFRED: "
     )
 
-    out: object = LLM(inject , max_tokens = 150, stop=["User:", "Butler:"], echo=False)
-    answer: str = out["choices"][0]["text"].strip()
+    out: object = LLM(inject , max_tokens = 150, stop=["User:", "ALFRED:"], echo=False)  ### Prompts the LLM model and expects a reply    
+    answer: str = out["choices"][random.randint(0,1)]["text"].strip()  ### Chooses an answer from LLM model 
     
     if "User said" in answer:
         try: answer: str = answer.split("User said")[0]

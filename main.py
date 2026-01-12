@@ -7,7 +7,7 @@ import os, sys
 
 COMMAND_INPUT = False  # True -> listen_command() ; False -> CLI (Command Line Interface) 
 
-def Command() -> str:
+def Command() -> str:  ### Changes COMMAND_INPUT VALUES [True/False]
     "Takes command from specified source"
     if COMMAND_INPUT:
         command = str(input(">> ")).lower()

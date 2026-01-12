@@ -49,6 +49,7 @@ class Memory:
             f"User: {q}\nButler: {a}" for q, a in self.store["conversation_history"]
         )
     
+    ##### For External file ##### 
     def session_end(self) -> None:
         "writes entries to the file of chats of a session end."
 

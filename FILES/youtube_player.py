@@ -6,7 +6,7 @@ from FILES.util_functions import speak
 player = None
 VOLUME_YOUTUBE = 100
 
-def play_youtube_audio(url_or_query):
+def play_youtube_audio(url_or_query):  ### Plays songs from Youtube.com without downloading them in background
     global player
 
     speak("Let me fetch that, sir.")
@@ -33,11 +33,12 @@ def play_youtube_audio(url_or_query):
             player.play()
 
             return (f"Now playing: {title}")
+
     except Exception as e:
         print(f"[YouTube ERROR]: {e}")
         return ("I'm sorry, I couldn't play it from YouTube.")
 
-def stop_youtube_audio():
+def stop_youtube_audio():   ### Stops the Youtube player
     global player
     if player:
         player.stop()
@@ -45,10 +46,9 @@ def stop_youtube_audio():
     else:
         return "Player not working, sir."
         
-
-def set_volume_youtube():
+def set_volume_youtube(): ### Controls Youtube audio volume
     global player, VOLUME_youtube
     if player:
         player.audio_set_volume(VOLUME_youtube)
         
-        
+

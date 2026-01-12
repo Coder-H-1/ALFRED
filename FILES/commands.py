@@ -15,7 +15,7 @@ model_Manager = ModelManager()
                 # .unload_model() 
                 # .prompt(prompt:str, max_token:int)
 
-def process_command(command:str) -> str:
+def process_command(command:str) -> str:  ### Executes commands after looking for certain keyword
     "Executes command with certain keyword"
 
     global VOLUME_YOUTUBE
@@ -281,7 +281,7 @@ def process_command(command:str) -> str:
     else: 
         return None
 
-def search_files(query: str, search_path="C:\\", is_commanded:bool=False, to_find:int=5) -> str:
+def search_files(query: str, search_path="C:\\", is_commanded:bool=False, to_find:int=5) -> str:    ### Searches for required file in 'search_path' = 'C:\\' 
     results = []
     query = query.lower()
 

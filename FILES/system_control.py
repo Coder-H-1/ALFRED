@@ -7,7 +7,7 @@ from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from ctypes import POINTER, cast
 from comtypes import CLSCTX_ALL
 
-def set_brightness(percent: int):
+def set_brightness(percent: int):  
     try:
         sbc.set_brightness(percent)
         return f"Brightness set to {percent}%, sir."

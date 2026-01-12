@@ -1,6 +1,7 @@
 import gc, os 
 from llama_cpp import Llama
 from util_functions import speak
+import random
 
 #gc = garbage collector
 
@@ -11,17 +12,18 @@ MODELS = {
 } # Model paths 
 
 
-class ModelManager:
+class ModelManager: ### Manages Chat and workflow models
     "Manages model"
     
     def __init__(self) -> None:
         self.model = None
         self.current_model_name = None
 
-    def load_model(self, model_path:str, name:str, context_len: int) -> None:
+    def load_model(self, model_path:str, name:str, context_len: int) -> None:  ### Loads LLM model in self.model 
         "Loads model as object in (self.model)"
 
-        if os.path.exists(model_path)!=True: speak("You currently don't have model for specified function. I don't actually know what to do."); return
+        if os.path.exists(model_path)!=True: 
+            speak("You currently don't have model for specified function. I don't actually know what to do."); return
         
         if self.model is not None:
             self.unload_model()
@@ -37,16 +39,16 @@ class ModelManager:
         )
         self.current_model_name = str(name)
 
-    def unload_model(self) -> None:
+    def unload_model(self) -> None:  ### Unloads LLM model from self.model and runs garbage collector to free RAM 
         "Unloads and deletes (self.model) object and runs Garbage collector"
 
         print(f"[manager] Unloading model: {self.current_model_name}")
-        del self.model
+        del self.model      ### deletes self.model object 
         self.model = None
         self.current_model_name = None
-        gc.collect()
+        gc.collect()    ### runs garbage collector
 
-    def prompt(self, prompt:str, max_token:int) -> str:
+    def prompt(self, prompt:str, max_token:int) -> str:  ### Runs and prompts the self.model > return string ( reply )  
         "Prompts the loaded (self.model) and returns string"
 
         if self.model:
@@ -57,9 +59,9 @@ class ModelManager:
                 top_p=0.9,
                 repeat_penalty=1.1,
             )
-            return output["choices"][0]["text"].strip()
+            return output["choices"][random.randint(0,1)]["text"].strip()
         else:
-            print("No models loaded -> first load a model then do prompt\n")
+            print("No models loaded -> first load a model then do prompts.\n")
             return
 
 
