@@ -1,6 +1,8 @@
 import gc, os 
 from llama_cpp import Llama
-from util_functions import speak
+from FILES.util_functions import speak
+from FILES.intent import IntentTrainer
+from FILES.commands import search_files
 import random
 
 #gc = garbage collector
@@ -18,6 +20,7 @@ class ModelManager: ### Manages Chat and workflow models
     def __init__(self) -> None:
         self.model = None
         self.current_model_name = None
+        self.filename:str = search_files(query="intents.jsonl",search_path="/workspace/ALFRED", is_commanded=True)
 
     def load_model(self, model_path:str, name:str, context_len: int) -> None:  ### Loads LLM model in self.model 
         "Loads model as object in (self.model)"
@@ -64,4 +67,14 @@ class ModelManager: ### Manages Chat and workflow models
             print("No models loaded -> first load a model then do prompts.\n")
             return
 
+    def Start_Intent_Trainer(self):
+        trainer = IntentTrainer(
+            base_model="distilbert-base-uncased",
+            output_dir="FILES/model/alfred_intent_model"
+        )
 
+        trainer.train(
+            train_file=self.filename,
+            epochs=3,
+            batch_size=8
+        )

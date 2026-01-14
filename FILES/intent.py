@@ -185,5 +185,26 @@ class IntentTrainer:
         print(f"Model saved to: {self.output_dir}")
 
 
+class INTENT:
+    def __init__(self, model:str = None) -> None:
+        self.classifier:object = IntentClassifier("alfred_intent_model" if model==None else model)
 
+    def get(self, text: str) -> tuple:
+        prediction:tuple = self.classifier.predict(text) # returns (intent:str, confidence:int)
+        return (prediction['intent'], prediction['confidence']) if prediction['confidence'] >= 0.6 else ("UNKNONN" , 0)
+    
+# trainer = IntentTrainer(
+#     base_model="distilbert-base-uncased",
+#     output_dir="FILES/model/alfred_intent_model"
+# )
+
+# trainer.train(
+#     train_file="/workspaces/ALFRED/FILES/model/alfred_intent_model/intents.jsonl",
+#     epochs=3,
+#     batch_size=8
+# )
+
+# Thing = INTENT()
+# while True:
+#     print(Thing.get(input(">> ")))
 

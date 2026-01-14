@@ -281,9 +281,9 @@ def process_command(command:str) -> str:  ### Executes commands after looking fo
     else: 
         return None
 
-def search_files(query: str, search_path="C:\\", is_commanded:bool=False, to_find:int=5) -> str:    ### Searches for required file in 'search_path' = 'C:\\' 
+def search_files(filename: str, search_path="C:\\", is_commanded:bool=False, to_find:int=5) -> str:    ### Searches for required file in 'search_path' = 'C:\\' 
     results = []
-    query = query.lower()
+    query = filename.lower()
 
     if is_commanded!=True: speak("Allow me a moment, sir.")
 
@@ -313,6 +313,7 @@ def search_files(query: str, search_path="C:\\", is_commanded:bool=False, to_fin
 
             speak("Shall I open the first result for you?")
             confirmation:str = listen_command()
+             
 
             if "cancel" in confirmation or "stop" in confirmation or confirmation == None:
                 return "Understood, I won’t open anything."

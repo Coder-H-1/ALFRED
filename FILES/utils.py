@@ -24,10 +24,11 @@ import os
 import datetime
 import random
 
+from llama_cpp import Llama
+
 try: from FILES.memory import Memory, MEMORY    # Do not remove Memory from here ; many functions uses it 
 except ModuleNotFoundError: from memory import Memory, MEMORY     ## for util file debugging
 
-from llama_cpp import Llama
 
 
 def get_time() -> str: ## Checks Time > returns a string ("It is %I:%M %p, sir")
@@ -70,7 +71,7 @@ MODEL_PATH:str = "FILES/model/*Model_name.gguf"  ### Change Model_Name if you wa
   
 LLM: object = Llama(        ### loads LLM model using LLama class
     model_path=MODEL_PATH,
-    n_ctx=3072,
+    n_ctx=2048,
     n_threads=get_optimal_threads(),
     verbose=False 
     )
