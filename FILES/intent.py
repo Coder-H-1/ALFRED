@@ -208,3 +208,4 @@ class INTENT:
 # while True:
 #     print(Thing.get(input(">> ")))
 
+### This method is still not completed. Will not work as intented.
