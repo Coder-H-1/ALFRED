@@ -3,9 +3,16 @@
 
 alias cls="clear"
 alias run="python3 "
-alias update="sudo apt update && sudo apt upgrade"
-alias download="pip install keyboard pyautogui plyer torch transformers speechRecognition pycaw pyttsx3 requests python-vlc yt_dlp screen_brightness_control dateparser \
-                && pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu --prefer-binary \
-                && echo done!"
+alias update="sudo apt update -y"
+alias download="echo 'Installing required packages\n' \
+            && pip install llama-cpp-python keyboard pyautogui plyer torch transformers speechRecognition pycaw pyttsx3 requests python-vlc yt_dlp screen_brightness_control dateparser --quiet \
+            && echo 'Installed required packages \n' \
+            && echo done!"
 
+alias create="cls \
+            && update \
+            && download \
+            && curl -L https://huggingface.co/DavidAU/L3.1-Dark-Planet-SpinFire-Uncensored-8B-GGUF/resolve/main/L3.1-Dark-Planet-SpinFire-Uncensored-8B-D_AU-Q3_k_s.gguf?download=true -o FILES/model/Chat_model.gguf \
+            && echo 'All installed!\nReady to start!\n'
+            "
                 

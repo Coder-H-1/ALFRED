@@ -113,7 +113,7 @@ The project uses GGUF-format models with `llama_cpp`.
 
 ### Standard Installation (CMD / PowerShell)
 
-    pip install keyboard plyer pyautogui speechRecognition torch transformers win32gui pycaw pyttsx3 requests python-vlc yt_dlp screen_brightness_control dateparser
+    pip install llama_cpp_python pyaudio keyboard plyer pyautogui speechRecognition torch transformers win32gui pycaw pyttsx3 requests python-vlc yt_dlp screen_brightness_control dateparser
 
 ---
 
