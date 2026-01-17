@@ -3,6 +3,7 @@ from FILES.utils import Responder , get_greeting, MEMORY
 from FILES.commands import process_command
 from FILES.reminder import start_background_reminder_thread
 from FILES.util_functions import listen_command, speak
+from FILES.intent import INTENT
 import os, sys
 
 COMMAND_INPUT = False  # True -> listen_command() ; False -> CLI (Command Line Interface) 
@@ -26,6 +27,7 @@ def main() -> None:
 
     while True:
         command = Command()
+        intent = INTENT()
         if command==None:
             continue
         if "switch command" in command:

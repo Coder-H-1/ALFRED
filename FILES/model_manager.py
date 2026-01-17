@@ -1,7 +1,7 @@
 import gc, os 
 from llama_cpp              import Llama
 from FILES.util_functions   import speak
-from FILES.intent           import IntentTrainer
+from FILES.intent           import INTENT
 from FILES.commands         import search_files
 import random
 
@@ -68,13 +68,4 @@ class ModelManager: ### Manages Chat and workflow models
             return
 
     def Start_Intent_Trainer(self):
-        trainer = IntentTrainer(
-            base_model="distilbert-base-uncased",
-            output_dir="FILES/model/alfred_intent_model"
-        )
-
-        trainer.train(
-            train_file=self.filename,
-            epochs=3,
-            batch_size=8
-        )
+        INTENT().Start_trainer()

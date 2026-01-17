@@ -1,4 +1,5 @@
 import torch
+import os
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
@@ -56,7 +57,6 @@ class IntentClassifier:
 
 
 import json
-import torch
 from torch.utils.data import Dataset
 from transformers import (
     AutoTokenizer,
@@ -64,6 +64,10 @@ from transformers import (
     Trainer,
     TrainingArguments
 )
+
+#############################################################################################################################################################
+### INTENT MODEL TRAINER
+#############################################################################################################################################################
 
 
 class IntentDataset(Dataset):
@@ -96,10 +100,6 @@ class IntentDataset(Dataset):
             "attention_mask": torch.tensor(encoding["attention_mask"]),
             "labels": torch.tensor(self.label2id[item["intent"]])
         }
-
-#############################################################################################################################################################
-### INTENT MODEL TRAINER
-#############################################################################################################################################################
 
 """
 To use Trainer, use
@@ -138,7 +138,7 @@ class IntentTrainer:
         epochs: int = 5,
         batch_size: int = 16,
         lr: float = 2e-5
-    ):
+    ) -> str:
         tokenizer = AutoTokenizer.from_pretrained(self.base_model)
 
         # Load dataset once to extract labels
@@ -182,30 +182,45 @@ class IntentTrainer:
         trainer.save_model(self.output_dir)
         tokenizer.save_pretrained(self.output_dir)
 
-        print(f"Model saved to: {self.output_dir}")
+        return "Trained the intention model, Will need a quick restart for myself to implement changes."
 
 
 class INTENT:
     def __init__(self, model:str = None) -> None:
-        self.classifier:object = IntentClassifier("alfred_intent_model" if model==None else model)
+        self.classifier:object = IntentClassifier("intent_model" if model==None else model)
+        self.train_file = "FILES/model/data/intents.jsonl"
+        self.base_model = "distilbert-base-uncased"
+        self.output_dir = "FILES/model/intent_model"
 
     def get(self, text: str) -> tuple:
-        prediction:tuple = self.classifier.predict(text) # returns (intent:str, confidence:int)
-        return (prediction['intent'], prediction['confidence']) if prediction['confidence'] >= 0.6 else ("UNKNONN" , 0)
+        if self.__check_intent_model__():
+            prediction:tuple = self.classifier.predict(text) # returns (intent:str, confidence:int)
+            return (prediction['intent'], prediction['confidence']) if prediction['confidence'] >= 0.6 else ("UNKNONN" , 0)
     
-# trainer = IntentTrainer(
-#     base_model="distilbert-base-uncased",
-#     output_dir="FILES/model/alfred_intent_model"
-# )
+    def __check_intent_model__(self) -> bool: return os.path.exists(self.output_dir)
+    def __check_train_file__(self) -> bool: return os.path.exists(self.train_file)
 
-# trainer.train(
-#     train_file="/workspaces/ALFRED/FILES/model/alfred_intent_model/intents.jsonl",
-#     epochs=3,
-#     batch_size=8
-# )
+    def Start_trainer(self) -> bool:
+        try:
+            if self.__check_train_file__():
+                trainer = IntentTrainer(
+                    base_model= self.base_model,
+                    output_dir= self.output_dir
+                )
 
-# Thing = INTENT()
-# while True:
-#     print(Thing.get(input(">> ")))
+                trainer.train(
+                    train_file=self.train_file,
+                    epochs=4, batch_size=8
+                )
+                return True
+
+            else: return False
+
+        except Exception as Error:
+            print(Error)
+            return False 
+
+
+
 
 ### This method is still not completed. Will not work as intented.

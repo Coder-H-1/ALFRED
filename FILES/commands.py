@@ -33,7 +33,10 @@ model_Manager = ModelManager()
                 # .unload_model() 
                 # .prompt(prompt:str, max_token:int)
 
-def process_command(command:str) -> str:  ### Executes commands after looking for certain keyword
+def Open_application(command:str) -> str:
+    pass
+
+def process_command(command:str, Intent:str) -> str:  ### Executes commands after looking for certain keyword
     "Executes command with certain keyword"
 
     global VOLUME_YOUTUBE
@@ -42,6 +45,8 @@ def process_command(command:str) -> str:  ### Executes commands after looking fo
         str(command), FROM_str=["open", "start", "close" , "end"], TO_str=["$", "$" , "&" , "&"]
         ).replace()
     
+    
+
     if "remind me" in command:
         match = re.search(r"remind me to (.+?) in (.+)", command)
         if match==None:
