@@ -3,9 +3,9 @@
 
 
 import screen_brightness_control as sbc
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-from ctypes import POINTER, cast
-from comtypes import CLSCTX_ALL
+from pycaw.pycaw        import AudioUtilities, IAudioEndpointVolume
+from ctypes             import POINTER, cast
+from comtypes           import CLSCTX_ALL
 
 def set_brightness(percent: int):  
     try:

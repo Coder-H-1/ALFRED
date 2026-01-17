@@ -24,10 +24,14 @@ import os
 import datetime
 import random
 
-from llama_cpp import Llama
+from llama_cpp      import Llama
 
-try: from FILES.memory import Memory, MEMORY    # Do not remove Memory from here ; many functions uses it 
-except ModuleNotFoundError: from memory import Memory, MEMORY     ## for util file debugging
+try: 
+    from FILES.memory           import Memory, MEMORY    # Do not remove Memory from here ; many functions uses it 
+    from FILES.util_functions   import EDIT as Text_Editor
+except ModuleNotFoundError: 
+    from memory                 import Memory, MEMORY     ## for util file debugging
+    from util_functions         import EDIT as Text_Editor
 
 
 
@@ -77,8 +81,10 @@ LLM: object = Llama(        ### loads LLM model using LLama class
     )
 
 def Responder(prompt: str) -> str: ### Reponds user query
+    "Reponds user query using Chat Model"
 
-    MEMORY.remember("last_command", prompt) ### sets key = "last_command" to value = (prompt)
+    MEMORY.remember("last_command", prompt) 
+    ### sets key = "last_command" to value = (prompt)
 
     history: str = MEMORY.get_history()   ## Chat History
      
@@ -90,20 +96,28 @@ def Responder(prompt: str) -> str: ### Reponds user query
         f"User said: {prompt}\nALFRED: "
     )
 
-    out: object = LLM(inject , max_tokens = 150, stop=["User:", "ALFRED:"], echo=False)  ### Prompts the LLM model and expects a reply    
-    answer: str = out["choices"][random.randint(0,1)]["text"].strip()  ### Chooses an answer from LLM model 
+    out: object = LLM(inject , max_tokens = 150, stop=["User:", "ALFRED:"], echo=False)  
+    ### Prompts the LLM model and expects a reply    
+    ### max_tokens = length of responce ; here 150 = words/tokens
+
+    answer: str = out["choices"][random.randint(0,1)]["text"].strip()  
+    ### Chooses an answer from LLM model 
     
     if "User said" in answer:
-        try: answer: str = answer.split("User said")[0]
+        try: 
+            answer: str = answer.split("User said")[0] ### returns answer from ['answer', 'unwanted']
         except: pass
 
-    answer: str = answer.replace("Assistant:" , "").replace("ALFRED:" , "")
+    answer: str = Text_Editor(
+        text=answer, FROM_str=["Assistant:", "ALFRED:"]
+        ).replace_to_none()  ### Replaces string names to ""
+    
     MEMORY.add_to_history(prompt, answer)
     return answer
 
-if __name__ == "__main__":
+# if __name__ == "__main__":   # to debug changes made in file
 
-    while True:
-        text:str = str(input(">> ")).strip()
-        print(Responder(text)) 
+#     while True:
+#         text:str = str(input(">> ")).strip()
+#         print(Responder(text)) 
 

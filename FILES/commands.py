@@ -1,9 +1,27 @@
-from FILES.util_functions import EDIT,  listen_command, speak
-from FILES.utils import clear_Memory, get_date, get_time
-from FILES.reminder import set_reminder, parse_spoken_time, cancel_reminder,list_reminders
-from FILES.system_control import mute_volume, adjust_brightness, adjust_volume, set_brightness,set_volume
-from FILES.youtube_player import play_youtube_audio, stop_youtube_audio, VOLUME_YOUTUBE,set_volume_youtube
-from FILES.model_manager import ModelManager, MODELS
+from FILES.util_functions       import EDIT,  listen_command, speak
+from FILES.utils                import clear_Memory, get_date, get_time
+from FILES.model_manager        import ModelManager, MODELS
+
+from FILES.reminder  import (
+    set_reminder, 
+    parse_spoken_time, 
+    cancel_reminder,
+    list_reminders
+    )
+from FILES.system_control import (
+    mute_volume, 
+    adjust_brightness,
+    adjust_volume, 
+    set_brightness,
+    set_volume
+    )
+from FILES.youtube_player import (
+    play_youtube_audio, 
+    stop_youtube_audio,
+    VOLUME_YOUTUBE,
+    set_volume_youtube
+    )
+
 
 import keyboard
 import os

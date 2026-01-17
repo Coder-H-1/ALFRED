@@ -1,8 +1,8 @@
 import gc, os 
-from llama_cpp import Llama
-from FILES.util_functions import speak
-from FILES.intent import IntentTrainer
-from FILES.commands import search_files
+from llama_cpp              import Llama
+from FILES.util_functions   import speak
+from FILES.intent           import IntentTrainer
+from FILES.commands         import search_files
 import random
 
 #gc = garbage collector
