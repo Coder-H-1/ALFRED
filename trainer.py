@@ -1,3 +1,5 @@
+## GOOGLE COLAB SCRIPT
+
 # ====== INSTALL DEPENDENCIES ======
 import os
 os.environ["WANDB_DISABLED"] = "true"

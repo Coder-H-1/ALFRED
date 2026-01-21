@@ -7,14 +7,14 @@ from pycaw.pycaw        import AudioUtilities, IAudioEndpointVolume
 from ctypes             import POINTER, cast
 from comtypes           import CLSCTX_ALL
 
-def set_brightness(percent: int):  
+def set_brightness(percent: int) -> str:  
     try:
         sbc.set_brightness(percent)
         return f"Brightness set to {percent}%, sir."
     except Exception as e:
-        return f"I'm afraid I couldn't set brightness, sir. Error: {e}"
+        return f"I'm afraid I couldn't set brightness, sir."
 
-def adjust_brightness(direction: str):
+def adjust_brightness(direction: str) -> str:
     current = sbc.get_brightness()[0]
     delta = 10 if direction == "increase" else -10
     new_brightness = max(0, min(100, current + delta))
