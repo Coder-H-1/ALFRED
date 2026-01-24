@@ -102,13 +102,13 @@ class IntentDataset(Dataset):
         }
 
 """
-To use Trainer, use
+To use Trainer model , use
 
 from intent_trainer import IntentTrainer
 
 trainer = IntentTrainer(
     base_model="distilbert-base-uncased",
-    output_dir="alfred_intent_model"
+    output_dir="intent_model"
 )
 
 trainer.train(
