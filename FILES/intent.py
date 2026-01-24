@@ -138,7 +138,7 @@ class IntentTrainer:
         epochs: int = 5,
         batch_size: int = 16,
         lr: float = 2e-5
-    ) -> str:
+    ) -> tuple:
         tokenizer = AutoTokenizer.from_pretrained(self.base_model)
 
         # Load dataset once to extract labels
@@ -182,7 +182,7 @@ class IntentTrainer:
         trainer.save_model(self.output_dir)
         tokenizer.save_pretrained(self.output_dir)
 
-        return "Trained the intention model, Will need a quick restart for myself to implement changes."
+        return "Trained the intention model, Will need a quick restart for myself to implement changes.",
 
 
 class INTENT:

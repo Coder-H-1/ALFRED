@@ -158,3 +158,445 @@
 {"text": "exit the notepad", "intent": "CLOSE_APP"}
 {"text": "exit the app", "intent": "CLOSE_APP"}
 {"text": "exit the application", "intent": "CLOSE_APP"}
+{"query" : "utterance" , "answer" : "agreement"}
+{"query" : "I agree" , "answer" : "yes"}
+{"query" : "I disagree" , "answer" : "no"}
+{"query" : "absolutely certain" , "answer" : "yes"}
+{"query" : "absolutely not" , "answer" : "no"}
+{"query" : "absolutely" , "answer" : "yes"}
+{"query" : "affirmative" , "answer" : "yes"}
+{"query" : "agreed upon" , "answer" : "yes"}
+{"query" : "agreed" , "answer" : "yes"}
+{"query" : "all right" , "answer" : "yes"}
+{"query" : "as if" , "answer" : "no"}
+{"query" : "ask again tomorrow" , "answer" : "Null"}
+{"query" : "aye" , "answer" : "yes"}
+{"query" : "by all means" , "answer" : "yes"}
+{"query" : "by no means yes" , "answer" : "no"}
+{"query" : "by no means" , "answer" : "no"}
+{"query" : "can't agree to that" , "answer" : "no"}
+{"query" : "can't agree with that" , "answer" : "no"}
+{"query" : "can't do that" , "answer" : "no"}
+{"query" : "can't say yes to that" , "answer" : "no"}
+{"query" : "can’t answer that now" , "answer" : "Null"}
+{"query" : "can’t decide right now" , "answer" : "Null"}
+{"query" : "can’t deny it" , "answer" : "yes"}
+{"query" : "can’t make up my mind" , "answer" : "Null"}
+{"query" : "can’t say yes or no" , "answer" : "Null"}
+{"query" : "certainly" , "answer" : "yes"}
+{"query" : "close enough" , "answer" : "yes"}
+{"query" : "consider it done" , "answer" : "yes"}
+{"query" : "consider me out" , "answer" : "no"}
+{"query" : "considering all options" , "answer" : "Null"}
+{"query" : "considering all options" , "answer" : "Null"}
+{"query" : "could be true" , "answer" : "Null"}
+{"query" : "could be" , "answer" : "Null"}
+{"query" : "could go either direction" , "answer" : "Null"}
+{"query" : "could go either way" , "answer" : "Null"}
+{"query" : "could swing both ways" , "answer" : "Null"}
+{"query" : "couldn't agree more" , "answer" : "yes"}
+{"query" : "couldn't be better" , "answer" : "yes"}
+{"query" : "couldn’t be further from the truth" , "answer" : "no"}
+{"query" : "count me in" , "answer" : "yes"}
+{"query" : "count me in" , "answer" : "yes"}
+{"query" : "count me out" , "answer" : "no"}
+{"query" : "definitely a no" , "answer" : "no"}
+{"query" : "definitely" , "answer" : "yes"}
+{"query" : "depends on the day" , "answer" : "Null"}
+{"query" : "disagreed" , "answer" : "no"}
+{"query" : "disagreed" , "answer" : "no"}
+{"query" : "do as you wish" , "answer" : "yes"}
+{"query" : "don't bet on it" , "answer" : "no"}
+{"query" : "don't count on it" , "answer" : "no"}
+{"query" : "don't think so" , "answer" : "no"}
+{"query" : "don’t ask me" , "answer" : "Null"}
+{"query" : "don’t even ask" , "answer" : "no"}
+{"query" : "don’t even mention it" , "answer" : "no"}
+{"query" : "don’t even think about it" , "answer" : "no"}
+{"query" : "don’t get too excited" , "answer" : "no"}
+{"query" : "don’t get your hopes up" , "answer" : "no"}
+{"query" : "don’t have a preference" , "answer" : "Null"}
+{"query" : "don’t have an answer" , "answer" : "Null"}
+{"query" : "don’t hold your breath" , "answer" : "no"}
+{"query" : "don’t push it" , "answer" : "no"}
+{"query" : "don’t see it happening" , "answer" : "no"}
+{"query" : "don’t see why not" , "answer" : "yes"}
+{"query" : "don’t waste your breath" , "answer" : "no"}
+{"query" : "far from it" , "answer" : "no"}
+{"query" : "fine by me" , "answer" : "yes"}
+{"query" : "fine with me" , "answer" : "yes"}
+{"query" : "for sure" , "answer" : "yes"}
+{"query" : "forget it" , "answer" : "no"}
+{"query" : "good call" , "answer" : "yes"}
+{"query" : "good point" , "answer" : "yes"}
+{"query" : "got my vote" , "answer" : "yes"}
+{"query" : "hard pass" , "answer" : "no"}
+{"query" : "hard to say" , "answer" : "Null"}
+{"query" : "he is lying" , "answer" : "no"}
+{"query" : "he is not lying" , "answer" : "yes"}
+{"query" : "heck no" , "answer" : "no"}
+{"query" : "heck yes" , "answer" : "yes"}
+{"query" : "i can get behind that" , "answer" : "yes"}
+{"query" : "i can get with that" , "answer" : "yes"}
+{"query" : "i can't argue with that" , "answer" : "yes"}
+{"query" : "i cannot agree" , "answer" : "no"}
+{"query" : "i can’t commit" , "answer" : "Null"}
+{"query" : "i couldn't say no to that" , "answer" : "yes"}
+{"query" : "i couldn’t agree more" , "answer" : "yes"}
+{"query" : "i couldn’t say no" , "answer" : "yes"}
+{"query" : "i don't think so" , "answer" : "no"}
+{"query" : "i don’t have all the facts" , "answer" : "Null"}
+{"query" : "i don’t know at the moment" , "answer" : "Null"}
+{"query" : "i got no beef with it" , "answer" : "yes"}
+{"query" : "i guess so" , "answer" : "yes"}
+{"query" : "i have mixed feelings" , "answer" : "Null"}
+{"query" : "i have my doubts" , "answer" : "no"}
+{"query" : "i haven’t made up my mind" , "answer" : "Null"}
+{"query" : "i might consider it" , "answer" : "Null"}
+{"query" : "i need more time" , "answer" : "Null"}
+{"query" : "i really think so" , "answer" : "yes"}
+{"query" : "i second that" , "answer" : "yes"}
+{"query" : "i support that" , "answer" : "yes"}
+{"query" : "i think not" , "answer" : "no"}
+{"query" : "i think so" , "answer" : "yes"}
+{"query" : "i want it for sure" , "answer" : "yes"}
+{"query" : "i wish" , "answer" : "no"}
+{"query" : "i would love that" , "answer" : "yes"}
+{"query" : "i would prefer not to" , "answer" : "no"}
+{"query" : "i would rather not" , "answer" : "no"}
+{"query" : "i wouldn't say yes" , "answer" : "no"}
+{"query" : "i wouldn’t count on it" , "answer" : "no"}
+{"query" : "i wouldn’t dare" , "answer" : "no"}
+{"query" : "i wouldn’t mind" , "answer" : "yes"}
+{"query" : "i wouldn’t touch it" , "answer" : "no"}
+{"query" : "i'd say yes" , "answer" : "yes"}
+{"query" : "i'll have to pass" , "answer" : "no"}
+{"query" : "i'll pass on that" , "answer" : "no"}
+{"query" : "i'll pass" , "answer" : "no"}
+{"query" : "i'm afraid not" , "answer" : "no"}
+{"query" : "i'm down for that" , "answer" : "yes"}
+{"query" : "i'm in" , "answer" : "yes"}
+{"query" : "i'm not buying it" , "answer" : "no"}
+{"query" : "i'm not so sure" , "answer" : "no"}
+{"query" : "i'm not sure about that" , "answer" : "no"}
+{"query" : "i'm with you on that" , "answer" : "yes"}
+{"query" : "if it pleases you" , "answer" : "yes"}
+{"query" : "if only" , "answer" : "no"}
+{"query" : "if you say so" , "answer" : "yes"}
+{"query" : "indeed" , "answer" : "yes"}
+{"query" : "it could go either way" , "answer" : "Null"}
+{"query" : "it wouldn’t work for me" , "answer" : "no"}
+{"query" : "it's a lie" , "answer" : "no"}
+{"query" : "it's a solid no" , "answer" : "no"}
+{"query" : "it's all good" , "answer" : "yes"}
+{"query" : "it's beyond doubt" , "answer" : "yes"}
+{"query" : "it's not a lie" , "answer" : "yes"}
+{"query" : "it’s a gray area" , "answer" : "Null"}
+{"query" : "it’s a long shot" , "answer" : "no"}
+{"query" : "it’s a maybe" , "answer" : "Null"}
+{"query" : "it’s a possibility" , "answer" : "Null"}
+{"query" : "it’s a toss-up" , "answer" : "Null"}
+{"query" : "it’s a wait-and-see" , "answer" : "Null"}
+{"query" : "it’s a work in progress" , "answer" : "Null"}
+{"query" : "it’s a yes for me" , "answer" : "yes"}
+{"query" : "it’s a yes from me" , "answer" : "yes"}
+{"query" : "it’s all good" , "answer" : "yes"}
+{"query" : "it’s beyond me" , "answer" : "no"}
+{"query" : "it’s complicated" , "answer" : "Null"}
+{"query" : "it’s crystal clear" , "answer" : "yes"}
+{"query" : "it’s not black or white" , "answer" : "Null"}
+{"query" : "it’s not definite" , "answer" : "Null"}
+{"query" : "it’s not for me" , "answer" : "no"}
+{"query" : "it’s not out of the question" , "answer" : "Null"}
+{"query" : "it’s obvious" , "answer" : "yes"}
+{"query" : "it’s open for discussion" , "answer" : "Null"}
+{"query" : "it’s pending" , "answer" : "Null"}
+{"query" : "it’s settled then" , "answer" : "yes"}
+{"query" : "it’s settled" , "answer" : "yes"}
+{"query" : "it’s under consideration" , "answer" : "Null"}
+{"query" : "it’s under review" , "answer" : "Null"}
+{"query" : "it’s up to you" , "answer" : "Null"}
+{"query" : "it’s up to you" , "answer" : "yes"}
+{"query" : "i’d rather not" , "answer" : "no"}
+{"query" : "i’d rather say no" , "answer" : "no"}
+{"query" : "i’ll allow it" , "answer" : "yes"}
+{"query" : "i’ll get back to you" , "answer" : "Null"}
+{"query" : "i’ll give it a go" , "answer" : "yes"}
+{"query" : "i’ll give it some thought" , "answer" : "Null"}
+{"query" : "i’ll give you that" , "answer" : "yes"}
+{"query" : "i’ll have to pass" , "answer" : "no"}
+{"query" : "i’ll have to say no" , "answer" : "no"}
+{"query" : "i’ll sleep on it" , "answer" : "Null"}
+{"query" : "i’ll stand by that" , "answer" : "yes"}
+{"query" : "i’ll stick with it" , "answer" : "yes"}
+{"query" : "i’ll support that" , "answer" : "yes"}
+{"query" : "i’ll take a rain check" , "answer" : "no"}
+{"query" : "i’ll think about it" , "answer" : "Null"}
+{"query" : "i’m all ears" , "answer" : "yes"}
+{"query" : "i’m all in" , "answer" : "yes"}
+{"query" : "i’m considering it" , "answer" : "Null"}
+{"query" : "i’m cool with it" , "answer" : "yes"}
+{"query" : "i’m hesitant" , "answer" : "Null"}
+{"query" : "i’m keeping it open" , "answer" : "Null"}
+{"query" : "i’m leaning toward yes" , "answer" : "yes"}
+{"query" : "i’m mulling it over" , "answer" : "Null"}
+{"query" : "i’m not opposed" , "answer" : "yes"}
+{"query" : "i’m not sure yet" , "answer" : "Null"}
+{"query" : "i’m on board" , "answer" : "yes"}
+{"query" : "i’m on the fence" , "answer" : "Null"}
+{"query" : "i’m on your side" , "answer" : "yes"}
+{"query" : "i’m pondering it" , "answer" : "Null"}
+{"query" : "i’m reserving judgment" , "answer" : "Null"}
+{"query" : "i’m torn" , "answer" : "Null"}
+{"query" : "i’m undecided" , "answer" : "Null"}
+{"query" : "keeping options open" , "answer" : "Null"}
+{"query" : "let's do it" , "answer" : "yes"}
+{"query" : "let’s discuss it later" , "answer" : "Null"}
+{"query" : "let’s leave it open" , "answer" : "Null"}
+{"query" : "let’s move forward" , "answer" : "yes"}
+{"query" : "let’s not rush into it" , "answer" : "Null"}
+{"query" : "let’s put a pin in it" , "answer" : "Null"}
+{"query" : "let’s revisit this" , "answer" : "Null"}
+{"query" : "make it happen" , "answer" : "yes"}
+{"query" : "make it so" , "answer" : "yes"}
+{"query" : "maybe later" , "answer" : "Null"}
+{"query" : "might be" , "answer" : "Null"}
+{"query" : "nah" , "answer" : "no"}
+{"query" : "nay" , "answer" : "no"}
+{"query" : "need more details" , "answer" : "Null"}
+{"query" : "need to check" , "answer" : "Null"}
+{"query" : "negative" , "answer" : "no"}
+{"query" : "never in my life" , "answer" : "no"}
+{"query" : "no argument from me" , "answer" : "yes"}
+{"query" : "no argument there" , "answer" : "yes"}
+{"query" : "no chance in hell" , "answer" : "no"}
+{"query" : "no chance" , "answer" : "no"}
+{"query" : "no comment" , "answer" : "Null"}
+{"query" : "no deal" , "answer" : "no"}
+{"query" : "no decision yet" , "answer" : "Null"}
+{"query" : "no dice" , "answer" : "no"}
+{"query" : "no doubt" , "answer" : "yes"}
+{"query" : "no final decision" , "answer" : "Null"}
+{"query" : "no hard feelings" , "answer" : "no"}
+{"query" : "no hard feelings" , "answer" : "no"}
+{"query" : "no matter what" , "answer" : "no"}
+{"query" : "no means no" , "answer" : "no"}
+{"query" : "no objections here" , "answer" : "yes"}
+{"query" : "no objections here" , "answer" : "yes"}
+{"query" : "no objections here" , "answer" : "yes"}
+{"query" : "no promises" , "answer" : "Null"}
+{"query" : "no question about it" , "answer" : "yes"}
+{"query" : "no reason to say no" , "answer" : "yes"}
+{"query" : "no room for doubt" , "answer" : "yes"}
+{"query" : "no set answer" , "answer" : "Null"}
+{"query" : "no shot" , "answer" : "no"}
+{"query" : "no sir" , "answer" : "no"}
+{"query" : "no strings attached" , "answer" : "yes"}
+{"query" : "no thank you" , "answer" : "no"}
+{"query" : "no thanks" , "answer" : "no"}
+{"query" : "no way in hell" , "answer" : "no"}
+{"query" : "no way jose" , "answer" : "no"}
+{"query" : "no way" , "answer" : "no"}
+{"query" : "no way" , "answer" : "no"}
+{"query" : "no worries" , "answer" : "yes"}
+{"query" : "no! please! I beg you" , "answer" : "no"}
+{"query" : "no" , "answer" : "no"}
+{"query" : "no" , "answer" : "no"}
+{"query" : "no" , "answer" : "no"}
+{"query" : "no" , "answer" : "no"}
+{"query" : "no" , "answer" : "no"}
+{"query" : "no" , "answer" : "no"}
+{"query" : "no" , "answer" : "no"}
+{"query" : "no" , "answer" : "no"}
+{"query" : "no" , "answer" : "no"}
+{"query" : "nope" , "answer" : "no"}
+{"query" : "nope" , "answer" : "no"}
+{"query" : "nope" , "answer" : "no"}
+{"query" : "nope" , "answer" : "no"}
+{"query" : "nope" , "answer" : "no"}
+{"query" : "nope" , "answer" : "no"}
+{"query" : "nope" , "answer" : "no"}
+{"query" : "nope" , "answer" : "no"}
+{"query" : "nope" , "answer" : "no"}
+{"query" : "not 100% certain" , "answer" : "Null"}
+{"query" : "not a chance" , "answer" : "no"}
+{"query" : "not a fan of that idea" , "answer" : "no"}
+{"query" : "not a fan" , "answer" : "no"}
+{"query" : "not a good idea" , "answer" : "no"}
+{"query" : "not as far as i know" , "answer" : "no"}
+{"query" : "not at all sure" , "answer" : "no"}
+{"query" : "not at all" , "answer" : "no"}
+{"query" : "not buying it" , "answer" : "no"}
+{"query" : "not by a long shot" , "answer" : "no"}
+{"query" : "not convinced" , "answer" : "no"}
+{"query" : "not cut and dried" , "answer" : "Null"}
+{"query" : "not enough information" , "answer" : "Null"}
+{"query" : "not entirely convinced" , "answer" : "Null"}
+{"query" : "not even close" , "answer" : "no"}
+{"query" : "not exactly" , "answer" : "no"}
+{"query" : "not feeling it" , "answer" : "no"}
+{"query" : "not gonna happen" , "answer" : "no"}
+{"query" : "not gonna happen" , "answer" : "no"}
+{"query" : "not happening" , "answer" : "no"}
+{"query" : "not if i can help it" , "answer" : "no"}
+{"query" : "not if my life depended on it" , "answer" : "no"}
+{"query" : "not if you paid me" , "answer" : "no"}
+{"query" : "not in a million years" , "answer" : "no"}
+{"query" : "not in my book" , "answer" : "no"}
+{"query" : "not in this lifetime" , "answer" : "no"}
+{"query" : "not interested" , "answer" : "no"}
+{"query" : "not making any promises" , "answer" : "Null"}
+{"query" : "not my cup of tea" , "answer" : "no"}
+{"query" : "not my style" , "answer" : "no"}
+{"query" : "not my thing" , "answer" : "no"}
+{"query" : "not now" , "answer" : "Null"}
+{"query" : "not on your life" , "answer" : "no"}
+{"query" : "not possible" , "answer" : "no"}
+{"query" : "not quite what i meant" , "answer" : "no"}
+{"query" : "not really my thing" , "answer" : "no"}
+{"query" : "not really" , "answer" : "no"}
+{"query" : "not settled yet" , "answer" : "Null"}
+{"query" : "not so fast" , "answer" : "no"}
+{"query" : "not sure at this time" , "answer" : "Null"}
+{"query" : "not sure if i can" , "answer" : "Null"}
+{"query" : "not that i know of" , "answer" : "no"}
+{"query" : "not this time" , "answer" : "no"}
+{"query" : "not today" , "answer" : "no"}
+{"query" : "not what i expected" , "answer" : "no"}
+{"query" : "not what i had in mind" , "answer" : "no"}
+{"query" : "not worth it" , "answer" : "no"}
+{"query" : "nothing could be more true" , "answer" : "yes"}
+{"query" : "now you're talking" , "answer" : "yes"}
+{"query" : "nuh-uh" , "answer" : "no"}
+{"query" : "obviously" , "answer" : "yes"}
+{"query" : "of course" , "answer" : "yes"}
+{"query" : "of course" , "answer" : "yes"}
+{"query" : "okay" , "answer" : "yes"}
+{"query" : "on hold for now" , "answer" : "Null"}
+{"query" : "on the contrary" , "answer" : "no"}
+{"query" : "open to interpretation" , "answer" : "Null"}
+{"query" : "over my dead body" , "answer" : "no"}
+{"query" : "please don't" , "answer" : "no"}
+{"query" : "please! I beg you" , "answer" : "yes"}
+{"query" : "please" , "answer" : "yes"}
+{"query" : "possibly" , "answer" : "yes"}
+{"query" : "probably not" , "answer" : "no"}
+{"query" : "right on" , "answer" : "yes"}
+{"query" : "right where it belongs" , "answer" : "yes"}
+{"query" : "roger that" , "answer" : "yes"}
+{"query" : "sign me up" , "answer" : "yes"}
+{"query" : "still in the works" , "answer" : "Null"}
+{"query" : "still on the table" , "answer" : "Null"}
+{"query" : "still thinking about it" , "answer" : "Null"}
+{"query" : "still undecided" , "answer" : "Null"}
+{"query" : "sure thing" , "answer" : "yes"}
+{"query" : "take it or leave it" , "answer" : "Null"}
+{"query" : "take my word for it" , "answer" : "yes"}
+{"query" : "that sounds about right" , "answer" : "yes"}
+{"query" : "that works for me" , "answer" : "yes"}
+{"query" : "that would be great" , "answer" : "yes"}
+{"query" : "that's a firm yes" , "answer" : "yes"}
+{"query" : "that's a given" , "answer" : "yes"}
+{"query" : "that's a mistake" , "answer" : "no"}
+{"query" : "that's a no-go for me" , "answer" : "no"}
+{"query" : "that's a strong no" , "answer" : "no"}
+{"query" : "that's a yes from me" , "answer" : "yes"}
+{"query" : "that's affirmative" , "answer" : "yes"}
+{"query" : "that's certainly undesirable" , "answer" : "no"}
+{"query" : "that's correct" , "answer" : "yes"}
+{"query" : "that's exactly it" , "answer" : "yes"}
+{"query" : "that's incorrect" , "answer" : "no"}
+{"query" : "that's right" , "answer" : "yes"}
+{"query" : "that’s a big yes" , "answer" : "yes"}
+{"query" : "that’s a given" , "answer" : "yes"}
+{"query" : "that’s a good one" , "answer" : "yes"}
+{"query" : "that’s a tough call" , "answer" : "Null"}
+{"query" : "that’s a wrap" , "answer" : "yes"}
+{"query" : "that’s affirmative" , "answer" : "yes"}
+{"query" : "that’s an option" , "answer" : "Null"}
+{"query" : "that’s cool with me" , "answer" : "yes"}
+{"query" : "that’s debatable" , "answer" : "Null"}
+{"query" : "that’s how it’s done" , "answer" : "yes"}
+{"query" : "that’s just it" , "answer" : "yes"}
+{"query" : "that’s more like it" , "answer" : "yes"}
+{"query" : "that’s my answer" , "answer" : "yes"}
+{"query" : "that’s my point" , "answer" : "yes"}
+{"query" : "that’s not clear to me" , "answer" : "Null"}
+{"query" : "that’s not going to happen" , "answer" : "no"}
+{"query" : "that’s spot on" , "answer" : "yes"}
+{"query" : "that’s the idea" , "answer" : "yes"}
+{"query" : "that’s the spirit" , "answer" : "yes"}
+{"query" : "that’s the way" , "answer" : "yes"}
+{"query" : "that’s what i’m talking about" , "answer" : "yes"}
+{"query" : "that’s wishful thinking" , "answer" : "no"}
+{"query" : "there are pros and cons" , "answer" : "Null"}
+{"query" : "there’s a chance" , "answer" : "Null"}
+{"query" : "there’s no easy answer" , "answer" : "Null"}
+{"query" : "thinking about it" , "answer" : "Null"}
+{"query" : "to be determined" , "answer" : "Null"}
+{"query" : "totally agree" , "answer" : "yes"}
+{"query" : "uh-huh" , "answer" : "yes"}
+{"query" : "understood" , "answer" : "yes"}
+{"query" : "up in the air" , "answer" : "Null"}
+{"query" : "we could look into it" , "answer" : "Null"}
+{"query" : "we haven’t decided" , "answer" : "Null"}
+{"query" : "we haven’t finalized" , "answer" : "Null"}
+{"query" : "we might get to that" , "answer" : "Null"}
+{"query" : "we might" , "answer" : "Null"}
+{"query" : "we need more input" , "answer" : "Null"}
+{"query" : "we’ll circle back to that" , "answer" : "Null"}
+{"query" : "we’ll have to wait and see" , "answer" : "Null"}
+{"query" : "we’ll play it by ear" , "answer" : "Null"}
+{"query" : "we’ll see" , "answer" : "Null"}
+{"query" : "we’ll talk about it" , "answer" : "Null"}
+{"query" : "we’re evaluating" , "answer" : "Null"}
+{"query" : "we’re still considering" , "answer" : "Null"}
+{"query" : "who’s to say?" , "answer" : "Null"}
+{"query" : "why not" , "answer" : "yes"}
+{"query" : "without a doubt" , "answer" : "yes"}
+{"query" : "without a shadow of a doubt" , "answer" : "yes"}
+{"query" : "without a shadow of doubt" , "answer" : "yes"}
+{"query" : "without question" , "answer" : "yes"}
+{"query" : "without question" , "answer" : "yes"}
+{"query" : "wouldn’t dream of it" , "answer" : "no"}
+{"query" : "wouldn’t miss it" , "answer" : "yes"}
+{"query" : "wrong answer" , "answer" : "no"}
+{"query" : "yeah" , "answer" : "yes"}
+{"query" : "yeah" , "answer" : "yes"}
+{"query" : "yep" , "answer" : "yes"}
+{"query" : "yes please" , "answer" : "yes"}
+{"query" : "yes sir" , "answer" : "yes"}
+{"query" : "yes" , "answer" : "yes"}
+{"query" : "yes" , "answer" : "yes"}
+{"query" : "yes" , "answer" : "yes"}
+{"query" : "yes" , "answer" : "yes"}
+{"query" : "yes" , "answer" : "yes"}
+{"query" : "yes" , "answer" : "yes"}
+{"query" : "yes" , "answer" : "yes"}
+{"query" : "yes" , "answer" : "yes"}
+{"query" : "yes" , "answer" : "yes"}
+{"query" : "yes" , "answer" : "yes"}
+{"query" : "you are mistaken" , "answer" : "no"}
+{"query" : "you are not mistaken" , "answer" : "yes"}
+{"query" : "you are not wrong" , "answer" : "yes"}
+{"query" : "you bet" , "answer" : "yes"}
+{"query" : "you can count on it" , "answer" : "yes"}
+{"query" : "you got it right" , "answer" : "yes"}
+{"query" : "you got it" , "answer" : "yes"}
+{"query" : "you got my blessing" , "answer" : "yes"}
+{"query" : "you guessed it right" , "answer" : "yes"}
+{"query" : "you have my blessing" , "answer" : "yes"}
+{"query" : "you have my word" , "answer" : "yes"}
+{"query" : "you hit the nail on the head" , "answer" : "yes"}
+{"query" : "you know it" , "answer" : "yes"}
+{"query" : "you missed the mark" , "answer" : "no"}
+{"query" : "you nailed it" , "answer" : "yes"}
+{"query" : "you read my mind" , "answer" : "yes"}
+{"query" : "you said it" , "answer" : "yes"}
+{"query" : "you're dead right" , "answer" : "yes"}
+{"query" : "you're on the money" , "answer" : "yes"}
+{"query" : "you’re barking up the wrong tree" , "answer" : "no"}
+{"query" : "you’re not wrong" , "answer" : "yes"}
+{"query" : "you’re right" , "answer" : "yes"}
+{"query" : "you’re spot on" , "answer" : "yes"}
+{"query" : "you’ve got it" , "answer" : "yes"}
