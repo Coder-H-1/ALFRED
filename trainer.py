@@ -4,7 +4,7 @@
 import os
 os.environ["WANDB_DISABLED"] = "true"
 
-!pip install -U transformers accelerate datasets peft trl bitsandbytes sentencepiece
+"pip install -U transformers accelerate datasets peft trl bitsandbytes sentencepiece"
 
 import torch
 from datasets import load_dataset
