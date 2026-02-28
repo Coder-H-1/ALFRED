@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 
-"""
+""" 
 
 To use custom intent model  
 
