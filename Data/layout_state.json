@@ -1,0 +1,22 @@
+{
+    "answerBox": {
+        "zone": "focus",
+        "pinned": false
+    },
+    "showBox": {
+        "zone": "focus",
+        "pinned": false
+    },
+    "logs": {
+        "zone": "passive",
+        "pinned": false
+    },
+    "functionCalls": {
+        "zone": "rapid",
+        "pinned": false
+    },
+    "visualizer": {
+        "zone": "rapid",
+        "pinned": false
+    }
+}

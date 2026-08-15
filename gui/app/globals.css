@@ -1,0 +1,427 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-color: #0d1117;
+  --panel-bg: rgba(22, 27, 34, 0.7);
+  --panel-border: rgba(48, 54, 61, 0.8);
+  --text-main: #c9d1d9;
+  --text-muted: #8b949e;
+  --accent: #2f81f7;
+  --accent-glow: rgba(47, 129, 247, 0.4);
+  --shadow-color: rgba(0, 0, 0, 0.5);
+
+  --zone-focus: transparent;
+  --zone-active: transparent;
+  --zone-rapid: transparent;
+  --zone-passive: transparent;
+}
+
+body {
+  background: #0a0c10;
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  /* App is full screen, no scroll */
+}
+
+.container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Zone System Layout */
+.zone-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 20px;
+  padding: 40px;
+  box-sizing: border-box;
+  pointer-events: none;
+  /* Let clicks pass through to background unless on a window */
+  z-index: 5;
+}
+
+.zone {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px dashed transparent;
+  transition: border-color 0.3s ease;
+  pointer-events: auto;
+  /* Catch events in zones */
+  overflow: hidden;
+}
+
+/* Scrollbar hiding for zones */
+.zone::-webkit-scrollbar {
+  width: 6px;
+}
+
+.zone::-webkit-scrollbar-thumb {
+  background: var(--panel-border);
+  border-radius: 3px;
+}
+
+/* Debug / Visualization colors for zones */
+.zone-focus {
+  background-color: var(--zone-focus);
+}
+
+.zone-active {
+  background-color: var(--zone-active);
+}
+
+.zone-rapid {
+  background-color: var(--zone-rapid);
+}
+
+.zone-passive {
+  background-color: var(--zone-passive);
+}
+
+/* Overlay Zone (Errors) */
+.zone-update {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  max-width: 800px;
+  background-color: rgba(30, 10, 10, 0.9);
+  border: 1px solid #ff6b6b;
+  border-radius: 12px;
+  padding: 20px;
+  z-index: 100;
+  box-shadow: 0 10px 30px rgba(255, 100, 100, 0.2);
+  display: flex;
+  flex-direction: column;
+  max-height: 40vh;
+}
+
+/* Generic Box/Window Styles (Neomorphism / Claymorphism) */
+.box {
+  background: var(--box-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--box-border);
+  border-radius: 24px;
+  /* Plumper borders */
+  padding: 20px;
+  box-shadow:
+    -4px -4px 10px rgba(255, 255, 255, 0.05),
+    4px 4px 15px rgba(0, 0, 0, 0.5);
+  /* Neumorphism/Claymorphism */
+
+  /* Hide scrollbars but allow scrolling */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  transition: opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+
+.box::-webkit-scrollbar {
+  display: none;
+}
+
+.box.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.box-elevated {
+  box-shadow: 0 10px 30px var(--shadow-color), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.box-recessed {
+  box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.5);
+  background-color: rgba(10, 13, 18, 0.8);
+}
+
+/* Zone Window specific adjustments */
+.zone-window {
+  position: relative;
+  /* Override absolute positioning from old layout */
+  width: 100%;
+  flex-shrink: 0;
+  pointer-events: auto;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+/* Specific Content Styles */
+.answer-content {
+  font-size: 1.1em;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  /* Fix answer box text issue by preserving newlines */
+  overflow-y: auto;
+  word-break: break-word;
+  max-height: 100%;
+}
+
+.logs-content {
+  overflow-y: auto;
+  word-break: break-word;
+}
+
+.logs-content pre {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 12px;
+  color: #7ee787;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* Hide scrollbars for logs and response contents */
+.logs-content::-webkit-scrollbar,
+.logs-content pre::-webkit-scrollbar,
+.answer-content::-webkit-scrollbar {
+  display: none !important;
+}
+
+.logs-content,
+.logs-content pre,
+.answer-content {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.function-calls-content p {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 14px;
+  color: #79c0ff;
+  margin: 0;
+}
+
+/* Show Box Image Stack */
+.show-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.image-stack {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.orb-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  /* Ensure orb overlaps everything */
+}
+
+.stacked-image {
+  position: absolute;
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease;
+  border: 1px solid var(--panel-border);
+  background-color: #000;
+}
+
+.stacked-image:hover {
+  transform: scale(1.05) !important;
+  z-index: 100 !important;
+}
+
+/* Core Orb Styling */
+.alfred-core {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #58a6ff, #0d1117);
+  box-shadow: none;
+  position: relative;
+  animation: pulse 4s infinite alternate ease-in-out;
+  cursor: pointer;
+}
+
+.alfred-core-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: none;
+  animation: core-pulse 2s infinite alternate ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes core-pulse {
+  0% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* Input Area Container */
+.command-input-container {
+  width: auto;
+  display: inline-block;
+  background: rgba(10, 12, 16, 0.8);
+  border-radius: 20px;
+  padding: 10px 20px;
+  /* border: 1px solid rgba(88, 166, 255, 0.2); */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.command-input {
+  width: 100%;
+  background-color: rgba(13, 17, 23, 0.8);
+  border: 1px solid var(--panel-border);
+  color: #fff;
+  padding: 15px 20px;
+  border-radius: 30px;
+  font-size: 16px;
+  outline: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.command-input:focus {
+  border-color: var(--text-muted);
+  box-shadow: 0 0 15px rgba(139, 148, 158, 0.2);
+  background-color: rgba(22, 27, 34, 0.9);
+}
+
+.status-text {
+  background-color: rgba(13, 17, 23, 0.8);
+  border: none;
+  color: var(--text-muted);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  text-align: center;
+  backdrop-filter: blur(5px);
+}
+
+/* Background Shapes */
+.shape {
+  position: absolute;
+  border: 2px solid rgba(100, 200, 255, 0.4);
+  box-shadow: 0 0 10px rgba(100, 200, 255, 0.2);
+  pointer-events: none;
+  z-index: 8;
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.shape.square {
+  width: 50px;
+  height: 50px;
+}
+
+.shape.circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+}
+
+.shape.pill {
+  width: 80px;
+  height: 30px;
+  border-radius: 15px;
+}
+
+.shape.triangle {
+  width: 0;
+  height: 0;
+  border-left: 25px solid transparent;
+  border-right: 25px solid transparent;
+  border-bottom: 50px solid rgba(255, 255, 255, 0.05);
+  border-top: none;
+  background: none;
+}
+
+.shape.diamond {
+  width: 50px;
+  height: 50px;
+  transform: rotate(45deg);
+}
+
+.shape.hexagon {
+  width: 50px;
+  height: 28.87px;
+  background-color: rgba(255, 255, 255, 0.05);
+  position: relative;
+  border: none;
+}
+
+.shape.hexagon::before,
+.shape.hexagon::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  border-left: 25px solid transparent;
+  border-right: 25px solid transparent;
+}
+
+.shape.hexagon::before {
+  bottom: 100%;
+  border-bottom: 14.43px solid rgba(255, 255, 255, 0.05);
+}
+
+.shape.hexagon::after {
+  top: 100%;
+  width: 0;
+  border-top: 14.43px solid rgba(255, 255, 255, 0.05);
+}
