@@ -1,50 +1,89 @@
 import requests
-import os
+from bs4 import BeautifulSoup
+import urllib.parse
+from duckduckgo_search import DDGS
 from FILES.logger import get_logger
 
 logger = get_logger(__name__)
 
 def extract_web_data(query: str, max_results: int = 5, max_images: int = 5) -> dict:
     """
-    Extracts data from web searches for a given query by hitting the backend API.
-    
-    Args:
-        query: The search term (e.g., "Iron man")
-        max_results: Max number of links/texts to fetch
-        max_images: Max number of images to fetch
-        
-    Returns:
-        dict: A dictionary containing 'query', 'details', 'links', and 'images'
+    Extracts data from web searches for a given query locally.
+    It scrapes related text, relative links, and 1 to 5 images.
     """
-    base_backend_url = os.getenv("RENDER_BACKEND_URL")
-    # Clean ending slash and append /api/search/
-    backend_url = base_backend_url.rstrip("/") + "/api/search/"
+    data = {
+        "query": query,
+        "details": [],
+        "links": [],
+        "images": []
+    }
     
-    logger.info(f"Extracting web data for: '{query}' via backend: {backend_url}")
-    
+    # 1. Fetch comprehensive details from Wikipedia API manually
     try:
-        res = requests.get(backend_url, params={"q": query, "max_results": max_results, "max_images": max_images}, timeout=30)
+        wiki_search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(query)}&utf8=&format=json"
+        res = requests.get(wiki_search_url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
         if res.status_code == 200:
-            logger.info("Successfully fetched search results from backend.")
-            return res.json()
-        else:
-            logger.warning(f"Backend returned status {res.status_code}")
-            return {
-                "query": query,
-                "details": [],
-                "links": [],
-                "images": [],
-                "error": f"Backend returned status {res.status_code}"
-            }
+            search_data = res.json()
+            if search_data.get('query', {}).get('search'):
+                title = search_data['query']['search'][0]['title']
+                
+                # Fetch extract and images
+                detail_url = f"https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&exintro&explaintext&titles={urllib.parse.quote(title)}&format=json&pithumbsize=500"
+                detail_res = requests.get(detail_url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
+                if detail_res.status_code == 200:
+                    pages = detail_res.json().get('query', {}).get('pages', {})
+                    for page_id, page_info in pages.items():
+                        if 'extract' in page_info:
+                            data['details'].append(page_info['extract'])
+                        if 'thumbnail' in page_info:
+                            data['images'].append(page_info['thumbnail']['source'])
+                        
+                        # Add link
+                        page_url = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(title)}"
+                        data['links'].append({"title": f"{title} - Wikipedia", "url": page_url})
     except Exception as e:
-        logger.error(f"Failed to fetch search results from backend: {e}", exc_info=True)
-        return {
-            "query": query,
-            "details": [],
-            "links": [],
-            "images": [],
-            "error": str(e)
-        }
+        logger.warning(f"Wikipedia search failed: {e}")
+
+    # 2. Scrape DuckDuckGo HTML directly as fallback/additional info
+    try:
+        ddg_url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(query)}"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        html_res = requests.get(ddg_url, headers=headers, timeout=10)
+        
+        if html_res.status_code == 200:
+            soup = BeautifulSoup(html_res.text, 'html.parser')
+            
+            for a in soup.find_all('a', class_='result__url', limit=max_results):
+                link = a.get('href', '')
+                if link and not link.startswith('//duckduckgo'):
+                    title_tag = a.find_previous('a', class_='result__snippet')
+                    title = title_tag.text if title_tag else "Link"
+                    
+                    snippet = a.find_previous('a', class_='result__snippet')
+                    if snippet and len(data['details']) < max_results:
+                         data['details'].append(snippet.text)
+                        
+                    data['links'].append({"title": title, "url": link})
+    except Exception as e:
+        logger.warning(f"DuckDuckGo HTML search error: {e}")
+
+    # 3. Use DuckDuckGo Search API (ddgs) as secondary for images
+    try:
+        ddgs = DDGS()
+        if len(data["images"]) < max_images:
+            image_results = list(ddgs.images(query, max_results=max_images))
+            for img in image_results:
+                if 'image' in img and img['image'] not in data["images"]:
+                    data["images"].append(img.get("image", ""))
+                    if len(data["images"]) >= max_images:
+                        break
+    except Exception as e:
+         pass
+            
+    if not data["details"] and not data["links"] and not data["images"]:
+        data["error"] = "Could not fetch any data for the given query."
+        
+    return data
 
 if __name__ == "__main__":
     import sys

@@ -7,6 +7,7 @@ from FILES.gui_controller import (
     add_function_call, show_data, hide_all, hide_transient_boxes, 
     set_input_mode, read_gui_command
 )
+from FILES.log_compressor import compress_all_rotated_logs
 from FILES.logger import get_logger
 import os
 import sys
@@ -59,6 +60,7 @@ def start_gui_server():
             logger.error(f"Failed to terminate GUI Server process: {e}")
         
     atexit.register(cleanup)
+    atexit.register(compress_all_rotated_logs)
 
 
 def Command() -> str:

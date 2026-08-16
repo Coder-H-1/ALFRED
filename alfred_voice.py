@@ -14,59 +14,50 @@ from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
-def chunk_text(text: str, max_words: int = 35) -> list[str]:
-    """Splits text into chunks of maximum max_words, preferring sentence boundaries."""
-    # Split by sentence endings (., !, ?) keeping the delimiters
-    sentences = re.split(r'(?<=[.!?]) +', text.strip())
+def chunk_text(text: str, max_words: int = 30) -> list[str]:
+    """
+    Splits text into chunks of maximum max_words. If a chunk does not end
+    with punctuation, looks ahead up to 8 words to find a punctuation mark
+    and complete the sentence/clause.
+    """
+    words = text.strip().split()
+    if not words:
+        return []
+        
     chunks = []
-    current_chunk = []
-    current_word_count = 0
+    i = 0
+    n = len(words)
     
-    for sentence in sentences:
-        words = sentence.split()
-        words_in_sentence = len(words)
+    def ends_with_punctuation(word: str) -> bool:
+        if not word:
+            return False
+        return word[-1] in ".!?,;:"
         
-        if current_word_count + words_in_sentence <= max_words and current_word_count > 0:
-            current_chunk.append(sentence)
-            current_word_count += words_in_sentence
+    while i < n:
+        if n - i <= max_words:
+            chunks.append(" ".join(words[i:]))
+            break
+            
+        # Check if the word at the limit ends with punctuation
+        limit_idx = i + max_words - 1
+        if ends_with_punctuation(words[limit_idx]):
+            chunks.append(" ".join(words[i : i + max_words]))
+            i += max_words
         else:
-            if current_chunk:
-                chunks.append(" ".join(current_chunk))
-                
-            if words_in_sentence > max_words:
-                # Try to split by commas or other pauses if sentence is too long
-                sub_phrases = re.split(r'(?<=[,;:]) +', sentence)
-                sub_chunk = []
-                sub_word_count = 0
-                for phrase in sub_phrases:
-                    phrase_words = phrase.split()
-                    if sub_word_count + len(phrase_words) <= max_words and sub_word_count > 0:
-                        sub_chunk.append(phrase)
-                        sub_word_count += len(phrase_words)
-                    else:
-                        if sub_chunk:
-                            chunks.append(" ".join(sub_chunk))
-                        
-                        if len(phrase_words) > max_words:
-                            # Still too long, force split by words
-                            for i in range(0, len(phrase_words), max_words):
-                                chunks.append(" ".join(phrase_words[i:i+max_words]))
-                            sub_chunk = []
-                            sub_word_count = 0
-                        else:
-                            sub_chunk = [phrase]
-                            sub_word_count = len(phrase_words)
-                if sub_chunk:
-                    chunks.append(" ".join(sub_chunk))
-                current_chunk = []
-                current_word_count = 0
+            # Look ahead up to 8 words for punctuation
+            found_idx = -1
+            for j in range(i + max_words, min(i + max_words + 8, n)):
+                if ends_with_punctuation(words[j]):
+                    found_idx = j
+                    break
+            
+            if found_idx != -1:
+                chunks.append(" ".join(words[i : found_idx + 1]))
+                i = found_idx + 1
             else:
-                current_chunk = [sentence]
-                current_word_count = words_in_sentence
+                chunks.append(" ".join(words[i : i + max_words]))
+                i += max_words
                 
-    if current_chunk:
-        chunks.append(" ".join(current_chunk))
-        
     return chunks
 
 class AlfredVoiceModule:
@@ -130,7 +121,7 @@ class AlfredVoiceModule:
         if not text or not text.strip():
             return
 
-        chunks = chunk_text(text, max_words=30) # Reduced to 25 to guarantee staying under 50 tokens
+        chunks = chunk_text(text, max_words=30) # Reduced to 30 to guarantee staying under 50 tokens
         logger.debug(f"Split text into {len(chunks)} chunks. Queuing for generation.")
         
         # Queue chunks to be managed by the generation thread

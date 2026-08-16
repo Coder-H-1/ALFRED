@@ -5,20 +5,18 @@
         "zone": "focus"
     },
     "answerBox": {
-        "visible": true,
-        "text": "The screen has been cleared, sir.",
+        "visible": false,
+        "text": "",
         "zone": "focus"
     },
     "logs": {
         "visible": false,
-        "text": "[23:01:42] System action matched successfully.\n[23:01:42] Added interaction to memory.\n",
+        "text": "",
         "zone": "passive"
     },
     "functionCalls": {
         "visible": false,
-        "calls": [
-            "process_command"
-        ],
+        "calls": [],
         "zone": "rapid"
     },
     "visualizer": {

@@ -2,12 +2,7 @@ import keyboard
 import subprocess
 import threading
 import time
-import os
-import requests
-from dotenv import load_dotenv
 
-# Ensure environment variables are loaded
-load_dotenv()
 
 from plyer import notification
 
@@ -35,21 +30,8 @@ def wait_for_hotkey():
             subprocess.Popen(['python', "main.py"])
 
 
-def poll_health():
-    backend_url = os.getenv("RENDER_BACKEND_URL")
-    while True:
-        try:
-            # Strip trailing slash and hit backend health endpoint
-            requests.get(f"{backend_url.rstrip('/')}/health", timeout=10)
-        except Exception:
-            pass
-        # Poll every 4 minutes (240s)
-        time.sleep(240)
-
-
 if __name__ == "__main__":    
     threading.Thread(target=wait_for_hotkey, daemon=True).start()
-    threading.Thread(target=poll_health, daemon=True).start()
 
     # Keeps launcher running forever
     while True:

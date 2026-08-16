@@ -89,11 +89,29 @@ def process_command(command:str, Intent:str=None) -> str:
     
     command = multi_replace(str(command), {"open": "$", "start": "$", "close": "&", "end": "&"})
     
-    # Wikipedia Integration
+    # Wikipedia/Online Search Integration
     if command.startswith("who is ") or command.startswith("what is ") or command.startswith("tell me about "):
         query = command.replace("who is ", "").replace("what is ", "").replace("tell me about ", "").strip()
         if query:
-            logger.info(f"Wikipedia query: '{query}'")
+            logger.info(f"Processing search/wikipedia query for: '{query}'")
+            
+            # 1. Try online search
+            try:
+                from FILES.web_search_extractor import extract_web_data
+                search_res = extract_web_data(query)
+                if search_res and not search_res.get("error") and search_res.get("details"):
+                    details = search_res.get("details", [])
+                    combined = " ".join([d.strip() for d in details if d.strip()][:2])
+                    if combined:
+                        logger.info("Online search via backend succeeded.")
+                        images = search_res.get("images", [])
+                        if images:
+                            show_data(images[:3])
+                        return combined + " [KEEP_UI]"
+            except Exception as e:
+                logger.warning(f"Online backend search failed: {e}")
+
+            # 2. Fallback to local Wikipedia library search
             try:
                 temp_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Data", "temp_images")
                 os.makedirs(temp_dir, exist_ok=True)
@@ -130,16 +148,12 @@ def process_command(command:str, Intent:str=None) -> str:
                 if images_b64:
                     show_data(images_b64)
                     
+                logger.info("Wikipedia library query succeeded.")
                 return summary + " [KEEP_UI]"
-            except wikipedia.exceptions.DisambiguationError:
-                logger.warning(f"Wikipedia disambiguation error for query: '{query}'")
-                return f"There are multiple results for {query}. Please be more specific."
-            except wikipedia.exceptions.PageError:
-                logger.warning(f"Wikipedia page error for query: '{query}'")
-                return f"I couldn't find any information about {query}."
             except Exception as e:
-                logger.error(f"Wikipedia error: {e}", exc_info=True)
-                return f"An error occurred while fetching information."
+                logger.warning(f"Wikipedia library search failed: {e}. Falling back to local LLM.")
+                # Returning None forces main.py to fall back to local LLM responder
+                return None
 
     # Zone & Window Movement Commands
     if "move window" in command or "move box" in command:
@@ -185,14 +199,54 @@ def process_command(command:str, Intent:str=None) -> str:
         hide_all()
         return "The screen has been cleared, sir."
 
+    elif "decompress logs" in command or "expand logs" in command:
+        try:
+            from FILES.log_compressor import decompress_log
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            logs_dir = os.path.join(base_dir, "logs")
+            count = 0
+            if os.path.exists(logs_dir):
+                for item in os.listdir(logs_dir):
+                    if item.endswith(".compressed_logs"):
+                        decompress_log(os.path.join(logs_dir, item))
+                        count += 1
+            if count > 0:
+                return f"Successfully decompressed {count} log file(s), sir."
+            else:
+                return "No compressed log files were found in the logs directory, sir."
+        except Exception as e:
+            logger.error(f"Failed to decompress logs: {e}", exc_info=True)
+            return f"Failed to decompress logs: {str(e)}"
+
+    elif "compress logs" in command:
+        try:
+            from FILES.log_compressor import compress_all_rotated_logs
+            compress_all_rotated_logs()
+            return "Log compression process completed, sir."
+        except Exception as e:
+            logger.error(f"Failed to compress logs: {e}", exc_info=True)
+            return f"Failed to compress logs: {str(e)}"
+
     elif "check weather outside" in command:
         try:
-            backend_url = os.getenv("RENDER_BACKEND_URL")
-            logger.info(f"Fetching weather from backend: {backend_url}")
-            res = requests.get(f"{backend_url}/api/weather", timeout=5).json()
-            weather_data = res.get("weather", "Could not fetch weather information.")
-            prompt = f"The user wants to check the weather. The JSON data is {weather_data}. Answer the user based on this data."
-            return Responder(prompt)
+            api_key = os.getenv("OpenWeatherKey")
+            if not api_key:
+                return "No OpenWeatherKey found in environment variables, sir."
+            
+            logger.info("Fetching weather locally...")
+            ip_info = requests.get("http://ip-api.com/json/", timeout=5).json()
+            lat = ip_info.get("lat")
+            lon = ip_info.get("lon")
+            city = ip_info.get("city", "Unknown location")
+            
+            if lat and lon:
+                url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
+                res = requests.get(url, timeout=5).json()
+                weather_data = {"weather": res, "city": city}
+                prompt = f"The user wants to check the weather. The JSON data is {weather_data}. Answer the user based on this data."
+                return Responder(prompt)
+            else:
+                return "Could not determine location coordinates, sir."
         except Exception as e:
             logger.error(f"Failed to check weather: {e}", exc_info=True)
             return f"Failed to check weather: {str(e)}"
@@ -389,15 +443,15 @@ def process_command(command:str, Intent:str=None) -> str:
             logger.error(f"Failed to open computer settings: {e}", exc_info=True)
             return f"Failed to open settings: {e}"
 
-    elif "shutdown computer" in command or "shut down the computer" in command or "shutdown system" in command or "shutdown the system" in command:
+    elif any(kw in command for kw in ("shutdown computer", "shut down computer", "shut down the computer", "shutdown system", "shutdown the system", "shutdown pc", "shut down pc", "turn off computer", "turn off the computer", "turn off pc", "power off computer", "power off pc")):
         logger.warning("System shutdown triggered!")
-        os.system("shutdown /s /t 1")
-        return "Shutting down the system now."
+        os.system("shutdown /s /f /t 5")
+        return "Shutting down the system now, sir."
 
-    elif "restart computer" in command or "restart the computer" in command or "restart system" in command or "restart the system" in command:
+    elif any(kw in command for kw in ("restart computer", "restart the computer", "restart system", "restart the system", "restart pc", "reboot computer", "reboot pc", "reboot the system", "reboot system")):
         logger.warning("System restart triggered!")
-        os.system("shutdown /r /t 1")
-        return "Restarting your machine, sir."
+        os.system("shutdown /r /f /t 5")
+        return "Restarting your machine now, sir."
     
     elif "clear memory" in command or "forget everything" in command or "clear your memory" in command:
         logger.info("Clearing memory history")

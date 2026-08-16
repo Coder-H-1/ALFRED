@@ -30,7 +30,7 @@ The project runs entirely locally using GGUF-format models via `llama_cpp`, ensu
 
 ## File Structure
 
-The project layout organizes files systematically across backend, frontend, plugins framework, and core Python modules:
+The project layout organizes files systematically across frontend, plugins framework, and core Python modules:
 
 ```
 Project/
@@ -63,7 +63,28 @@ Project/
 │   ├── window_manager.py # pygetwindow layout helper static class
 │   └── youtube_player.py # yt-dlp search stream URL extraction
 ├── FmWk/                 # Detachable Octopus Plugin compile framework
-└── backend/              # Detachable API backend services (fastapi, requests)
+├── gui/                  # Next.js web GUI interface
+│   ├── app/              # Main layout, styles, page and api endpoints
+│   │   ├── api/          # Internal JSON routes (config, command, logs)
+│   │   │   ├── command/  # Route to post shell commands
+│   │   │   │   └── route.js
+│   │   │   ├── config/   # Route to get/set layout variables
+│   │   │   │   └── route.js
+│   │   │   ├── error/    # Route to submit UI crash errors
+│   │   │   │   └── route.js
+│   │   │   ├── logs/     # Route to stream background execution logs
+│   │   │   │   └── route.js
+│   │   │   └── unpin_zone/ # Route to restore zone placement
+│   │   │       └── route.js
+│   │   ├── favicon.ico   # Browser tab icon
+│   │   ├── globals.css   # Global page styling and animations
+│   │   ├── layout.js     # Shared shell layout configuration
+│   │   ├── page.js       # Core GUI display and interaction page
+│   │   └── page.module.css # Component-specific stylesheet
+│   ├── public/           # Static assets (svg icons)
+│   ├── jsconfig.json     # VSCode JS mapping configurations
+│   ├── package.json      # Node.js project configuration
+│   └── next.config.mjs   # Next.js server configuration
 ```
 
 ---
@@ -71,9 +92,9 @@ Project/
 ## Basic Principles
 
 - **Optimal Reusability**: Common helpers such as string replacement and sound synthesis are centralized under `FILES/util_functions.py` and `alfred_voice.py`.
-- **Zero-Hardcoding**: Endpoints like `RENDER_BACKEND_URL` are sourced dynamically from `.env`.
+- **Zero-Hardcoding**: Endpoints like `OpenWeatherKey` are sourced dynamically from `.env`.
 - **Structured Operations Logging**: Every module utilizes a centralized logger in `FILES/logger.py` writing rotating logs to `logs/alfred.log` at the `DEBUG` level while displaying essential information to the console.
-- **Detachable Ecosystem**: The `backend/` and `FmWk/` directories represent fully decoupled microservice structures with distinct git histories. They communicate with the main workspace solely via network requests and standard socket protocols.
+- **Detachable Ecosystem**: The `FmWk/` directory represents a fully decoupled microservice structure with its own git history. It communicates with the main workspace solely via network requests and standard socket protocols.
 
 ---
 
@@ -132,7 +153,7 @@ npm install
 ### 3. Environment Config
 Create a `.env` file in the root directory:
 ```env
-RENDER_BACKEND_URL=your-render-backend-url
+OpenWeatherKey=your-openweather-api-key
 ```
 
 ### 4. Run Launcher

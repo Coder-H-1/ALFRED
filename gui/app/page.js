@@ -311,7 +311,7 @@ export default function Home() {
     // 1. Visualizer (Bottom-most in its assigned zone)
     if (config.visualizer?.zone === zoneName) {
         windows.push(
-          <div key="visualizer" className="box box-elevated visible" style={{ padding: '10px', position: 'fixed', bottom: '20px', right: '20px', width: '370px' }}>
+          <div key="visualizer" className="box box-elevated visible" style={{ padding: '10px', position: 'fixed', bottom: '20px', right: '20px', width: '280px' }}>
              <VisualizerCanvas analyserRef={analyserRef} isAudioSpeaking={isAudioSpeaking} />
           </div>
         );
@@ -320,24 +320,24 @@ export default function Home() {
     // 2. Status Text / Input (Only in Passive zone, above visualizer if present)
     if (zoneName === 'passive') {
         windows.push(
-          <div key="statusText" className="input-area command-input-container" style={{ marginTop: 0, pointerEvents: 'auto', display: 'inline-block', width: 'auto', position: 'fixed', bottom: '20px', right: '450px' }}>
-              {config.commandInput ? (
-                <form onSubmit={handleSubmit}>
-                  <input 
-                    ref={inputRef}
-                    type="text" 
-                    value={inputText}
-                    onChange={e => setInputText(e.target.value)}
-                    placeholder="Type your command..." 
-                    autoFocus
-                    className="command-input"
-                  />
-                </form>
-              ) : (
-                config.statusText ? (
-                  <div className="status-text" style={{ whiteSpace: 'nowrap' }}>{config.statusText}</div>
-                ) : null
-              )}
+          <div key="statusText" className="input-area command-input-container" style={{ marginTop: 0, pointerEvents: 'auto', display: 'inline-block', width: 'auto', position: 'fixed', bottom: '20px', right: '350px' }}>
+               {config.commandInput ? (
+                 <form onSubmit={handleSubmit}>
+                   <input 
+                     ref={inputRef}
+                     type="text" 
+                     value={inputText}
+                     onChange={e => setInputText(e.target.value)}
+                     placeholder="Type your command..." 
+                     autoFocus
+                     className="command-input"
+                   />
+                 </form>
+               ) : (
+                 config.statusText ? (
+                   <div className="status-text" style={{ whiteSpace: 'nowrap' }}>{config.statusText}</div>
+                 ) : null
+               )}
           </div>
         );
     }
@@ -497,7 +497,7 @@ export default function Home() {
           position: 'fixed', 
           bottom: '20px', 
           left: '20px', 
-          width: '320px', 
+          width: '352px', 
           maxHeight: '220px', 
           pointerEvents: 'auto',
           zIndex: 9,

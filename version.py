@@ -1,5 +1,5 @@
 PROJECT_NAME = "ALFRED"
-PROJECT_VERSION = "1.0.0"
+PROJECT_VERSION = "1.1.1"
 PROJECT_AUTHOR = "Coder-H-1"
 PROJECT_DESCRIPTION = "A multimodal AI assistant designed to assist with daily task efficiently."
 GUI_PORT = 8000
