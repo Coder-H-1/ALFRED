@@ -5,11 +5,13 @@ from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from ctypes import POINTER, cast
 from comtypes import CLSCTX_ALL
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
 _volume_interface = None
 
+@track_latency("system_control._get_volume")
 def _get_volume():
     global _volume_interface
     if not _volume_interface:
@@ -23,6 +25,7 @@ def _get_volume():
             raise
     return _volume_interface
 
+@track_latency("system_control.set_brightness")
 def set_brightness(percent: int) -> str:
     try:
         logger.info(f"Setting brightness to: {percent}%")
@@ -32,6 +35,7 @@ def set_brightness(percent: int) -> str:
         logger.error(f"Failed to set system brightness: {e}", exc_info=True)
         return "I'm afraid I couldn't set brightness, sir."
 
+@track_latency("system_control.adjust_brightness")
 def adjust_brightness(direction: str) -> str:
     try:
         current = sbc.get_brightness()[0]
@@ -43,6 +47,7 @@ def adjust_brightness(direction: str) -> str:
         logger.error(f"Failed to adjust system brightness: {e}", exc_info=True)
         return "I'm afraid I couldn't adjust brightness, sir."
 
+@track_latency("system_control.set_volume")
 def set_volume(percent: int) -> str:
     try:
         logger.info(f"Setting volume to: {percent}%")
@@ -53,6 +58,7 @@ def set_volume(percent: int) -> str:
         logger.error(f"Failed to set system volume: {e}", exc_info=True)
         return f"I couldn't set volume, sir. Error: {e}"
 
+@track_latency("system_control.adjust_volume")
 def adjust_volume(direction: str) -> str:
     try:
         volume = _get_volume()
@@ -65,6 +71,7 @@ def adjust_volume(direction: str) -> str:
         logger.error(f"Failed to adjust system volume: {e}", exc_info=True)
         return f"I couldn't adjust volume, sir. Error: {e}"
 
+@track_latency("system_control.mute_volume")
 def mute_volume() -> str:
     try:
         logger.info("Muting system volume")

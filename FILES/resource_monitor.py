@@ -1,9 +1,11 @@
 import psutil
 import os
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
+@track_latency("resource_monitor.get_system_stats")
 def get_system_stats() -> dict:
     """Returns CPU % and RAM details."""
     try:
@@ -30,6 +32,7 @@ def get_system_stats() -> dict:
             "ram_percent": 0.0
         }
 
+@track_latency("resource_monitor.get_process_stats")
 def get_process_stats() -> dict:
     """Returns resource stats for ALFRED process."""
     try:
@@ -49,6 +52,7 @@ def get_process_stats() -> dict:
             "process_mem_mb": 0.0
         }
 
+@track_latency("resource_monitor.format_stats_string")
 def format_stats_string() -> str:
     """Returns stats in voice-friendly phrase."""
     sys_stats = get_system_stats()

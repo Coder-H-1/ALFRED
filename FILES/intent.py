@@ -3,6 +3,7 @@ import os
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
@@ -36,6 +37,7 @@ class IntentClassifier:
 
         self.id2label = self.model.config.id2label
 
+    @track_latency("IntentClassifier.predict")
     @torch.no_grad()
     def predict(self, text: str) -> dict:
         if not text or not text.strip():
@@ -196,6 +198,7 @@ class Intent:
         self.base_model = "distilbert-base-uncased"
         self.output_dir = "FILES\\model\\intentModel"
 
+    @track_latency("Intent.get")
     def get(self, text: str) -> tuple:
         if self.__check_intent_model__():
             prediction:tuple = self.classifier.predict(text) # returns (intent:str, confidence:int)
@@ -205,6 +208,7 @@ class Intent:
     def __check_intent_model__(self) -> bool: return os.path.exists(self.output_dir)
     def __check_train_file__(self) -> bool: return os.path.exists(self.train_file)
 
+    @track_latency("Intent.Start_trainer")
     def Start_trainer(self) -> bool:
         try:
             if self.__check_train_file__():

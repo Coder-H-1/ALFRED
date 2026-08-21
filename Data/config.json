@@ -1,22 +1,27 @@
 {
     "showBox": {
         "visible": false,
-        "data": [],
+        "data": [
+            "video:https://rr4---sn-gwpa-5bge7.googlevideo.com/videoplayback?expire=1787351187&ei=M3yIaqHVNrbu4-EPvJu_8AQ&ip=2405%3A201%3A6808%3A2035%3Aedb3%3A8c7f%3A18fd%3Aed70&id=o-ALbwOp874OUBdXSn9nJf_f27hrLKfqJYOuHJNqKRZqm5&itag=18&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&cps=1012&met=1787329587%2C&mh=Fc&mm=18%2C29&mn=sn-gwpa-5bge7%2Csn-gwpa-qxae7&ms=aub%2Crdu&mv=m&mvi=4&pcm2cms=yes&pl=47&rms=aub%2Caub&gcr=in&initcwndbps=721250&bui=AR3QkAnF3lpl5eC5P9W6Vw9Coymb16vLyET1ir1qgoe8EptrQhWGcsb1Cbj_XgTC6xgG8s-bMPwpBEUQ&spc=KBGBcn8shcuDyLsJneFmj3sfe99wRChSb0aBbHEfoFCTTuHl9g&vprv=1&svpuc=1&mime=video%2Fmp4&rqh=1&cnr=14&ratebypass=yes&dur=267.679&lmt=1786856247120396&mt=1787329028&fvip=1&fexp=51565115&c=ANDROID_VR&txp=5538234&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cgcr%2Cbui%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Ccnr%2Cratebypass%2Cdur%2Clmt&sig=AE0s2JYwRQIhAKXHicAY6wb8OP2XywPm2quKl_O1Yl03rD6i0-3niMInAiBuPgdOA3DD6ipLWWnaVJ7MPllQknid3AtfbyuYyrGmBw%3D%3D&lsparams=cps%2Cmet%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpcm2cms%2Cpl%2Crms%2Cinitcwndbps&lsig=APaTxxMwRAIgHiPVpitXyFnka2RjIM3gW_OfDJxOh9OzLDIP5yZE5PMCIGguDKUH4mXGi-nQf4j6iJ5cIZ2PUkRzcwY1UH-G47Up"
+        ],
         "zone": "focus"
     },
     "answerBox": {
-        "visible": false,
-        "text": "",
+        "visible": true,
+        "text": "The screen has been cleared, sir.\n\n Playing from YouTube.\n\n Opening Youtube Music in browser\n\n",
         "zone": "focus"
     },
     "logs": {
-        "visible": false,
-        "text": "",
+        "visible": true,
+        "text": "[21:59:45] Query received: exit system\n",
         "zone": "passive"
     },
     "functionCalls": {
-        "visible": false,
-        "calls": [],
+        "visible": true,
+        "calls": [
+            "Command Listener",
+            "Intent Matcher"
+        ],
         "zone": "rapid"
     },
     "visualizer": {
@@ -27,8 +32,8 @@
         "text": "",
         "zone": "update"
     },
-    "queryActive": false,
-    "commandInput": true,
+    "queryActive": true,
+    "commandInput": false,
     "statusText": "",
     "videoControls": {
         "muted": false,

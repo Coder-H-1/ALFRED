@@ -9,6 +9,7 @@ import socket
 import threading
 import traceback
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 # Import port configuration from version control file
 try:
@@ -27,6 +28,7 @@ _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Proje
 _COMPILED_DIR = os.path.join(_BASE_DIR, "FmWk", "compiled_plugins")
 
 
+@track_latency("plugin_host.load_compiled_plugins")
 def load_compiled_plugins() -> int:
     """
     Scans FmWk/compiled_plugins/ and exec()s every .py file into DYNAMIC_COMMANDS.
@@ -55,6 +57,7 @@ def load_compiled_plugins() -> int:
     return loaded
 
 
+@track_latency("plugin_host.inject_payload")
 def inject_payload(payload: str, source: str = "socket") -> None:
     """
     Executes a compiled Python payload string inside a namespace
@@ -76,6 +79,7 @@ def inject_payload(payload: str, source: str = "socket") -> None:
         logger.error(traceback.format_exc())
 
 
+@track_latency("plugin_host.match_dynamic_command")
 def match_dynamic_command(command: str):
     """
     Iterates over all registered DYNAMIC_COMMANDS and calls each handler.
@@ -132,6 +136,7 @@ def _socket_listener():
         logger.error("Is another instance of ALFRED or Octopus already running?")
 
 
+@track_latency("plugin_host.start_plugin_listener")
 def start_plugin_listener():
     """
     Loads all existing compiled plugins, then starts the background socket listener.

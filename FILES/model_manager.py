@@ -3,6 +3,7 @@ import os
 from llama_cpp import Llama
 from FILES.util_functions import speak
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
@@ -23,6 +24,7 @@ class ModelManager:
         self.current_model_name = None
         self.filename = os.path.join(_BASE_DIR, "FILES", "intents.jsonl")
 
+    @track_latency("ModelManager.load_model")
     def load_model(self, model_path:str, name:str, context_len: int) -> None:
         """Loads LLM model in self.model."""
         if not os.path.exists(model_path): 
@@ -47,6 +49,7 @@ class ModelManager:
         except Exception as e:
             logger.error(f"Failed to load model {name}: {e}", exc_info=True)
 
+    @track_latency("ModelManager.unload_model")
     def unload_model(self) -> None:
         """Unloads LLM model from self.model and runs garbage collector to free RAM."""
         if self.model is not None:
@@ -57,6 +60,7 @@ class ModelManager:
             gc.collect()
             logger.info("Garbage collection complete, model memory freed.")
 
+    @track_latency("ModelManager.prompt")
     def prompt(self, prompt:str, max_token:int) -> str:
         """Runs and prompts the self.model > return string ( reply )."""
         if self.model:

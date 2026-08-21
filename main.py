@@ -9,6 +9,7 @@ from FILES.gui_controller import (
 )
 from FILES.log_compressor import compress_all_rotated_logs
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import LatencyRecorder
 import os
 import sys
 import subprocess
@@ -97,6 +98,10 @@ def main():
     init_config()
     start_gui_server()
     
+    # Initialize latency recorder and log startup
+    latency = LatencyRecorder()
+    latency.startup_record()
+    
     # Open GUI in default browser
     gui_url = f"http://localhost:{version.GUI_PORT}"
     logger.info(f"Opening GUI URL in browser: {gui_url}")
@@ -119,6 +124,7 @@ def main():
 
     while True:
         try:
+            q_start = time.time()
             command = Command()
             if command is None: 
                 continue
@@ -186,6 +192,15 @@ def main():
                 speak(clean_response) 
                 show_logs("Response generated and spoken.")
                 hide_transient_boxes()
+            
+            # Record latency for this command cycle
+            q_end = time.time()
+            latency.record(
+                source="main.command_loop",
+                query_length=len(command) if command else 0,
+                query_received_at=q_start,
+                output_at=q_end
+            )
                 
         except Exception as loop_error:
             logger.error(f"Error inside command handler loop: {loop_error}", exc_info=True)

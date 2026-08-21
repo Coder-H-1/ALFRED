@@ -1,10 +1,12 @@
 import json
 import os
+from FILES.LATENCY_RECORDER import track_latency
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Data")
 CONFIG_PATH = os.path.join(DATA_DIR, "config.json")
 LAYOUT_PATH = os.path.join(DATA_DIR, "layout_state.json")
 
+@track_latency("gui_controller.init_config")
 def init_config():
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
@@ -24,6 +26,7 @@ def init_config():
     if not os.path.exists(CONFIG_PATH):
         reset_gui()
 
+@track_latency("gui_controller.get_layout")
 def get_layout():
     try:
         with open(LAYOUT_PATH, "r") as f:
@@ -37,10 +40,12 @@ def get_layout():
             "visualizer": { "zone": "rapid", "pinned": False }
         }
 
+@track_latency("gui_controller.save_layout")
 def save_layout(layout):
     with open(LAYOUT_PATH, "w") as f:
         json.dump(layout, f, indent=4)
 
+@track_latency("gui_controller.read_config")
 def read_config():
     layout = get_layout()
     try:
@@ -78,10 +83,12 @@ def read_config():
             "videoControls": {"muted": False, "audioOnly": False, "seekOffset": 0, "seekDirection": None}
         }
 
+@track_latency("gui_controller.write_config")
 def write_config(data):
     with open(CONFIG_PATH, "w") as f:
         json.dump(data, f, indent=4)
 
+@track_latency("gui_controller.reset_gui")
 def reset_gui():
     layout = get_layout()
     write_config({
@@ -97,6 +104,7 @@ def reset_gui():
         "videoControls": {"muted": False, "audioOnly": False, "seekOffset": 0, "seekDirection": None}
     })
 
+@track_latency("gui_controller.set_query_active")
 def set_query_active(active: bool):
     data = read_config()
     data["queryActive"] = active
@@ -110,12 +118,14 @@ def set_query_active(active: bool):
                 data["answerBox"]["text"] += "\n\n"
     write_config(data)
 
+@track_latency("gui_controller.add_function_call")
 def add_function_call(func_name: str):
     data = read_config()
     data["functionCalls"]["visible"] = True
     data["functionCalls"]["calls"].append(func_name)
     write_config(data)
 
+@track_latency("gui_controller.show_answer")
 def show_answer(text: str):
     data = read_config()
     layout = get_layout()
@@ -133,6 +143,7 @@ def show_answer(text: str):
         data["answerBox"]["text"] += " " + text
     write_config(data)
 
+@track_latency("gui_controller.show_logs")
 def show_logs(text: str):
     data = read_config()
     import datetime
@@ -144,6 +155,7 @@ def show_logs(text: str):
     data["logs"]["text"] += formatted_log
     write_config(data)
 
+@track_latency("gui_controller.show_data")
 def show_data(images_or_data: list):
     data = read_config()
     layout = get_layout()
@@ -164,9 +176,11 @@ def show_data(images_or_data: list):
     data["showBox"]["data"] = images_or_data
     write_config(data)
 
+@track_latency("gui_controller.hide_all")
 def hide_all():
     reset_gui()
 
+@track_latency("gui_controller.hide_transient_boxes")
 def hide_transient_boxes():
     data = read_config()
     data["showBox"]["visible"] = False
@@ -183,12 +197,14 @@ def hide_transient_boxes():
     data["errors"]["visible"] = False
     write_config(data)
 
+@track_latency("gui_controller.set_input_mode")
 def set_input_mode(mode: bool, status_text: str = ""):
     data = read_config()
     data["commandInput"] = mode
     data["statusText"] = status_text
     write_config(data)
 
+@track_latency("gui_controller.read_gui_command")
 def read_gui_command() -> str:
     cmd_path = os.path.join(DATA_DIR, "command.txt")
     if os.path.exists(cmd_path):
@@ -200,12 +216,14 @@ def read_gui_command() -> str:
             return text
     return None
 
+@track_latency("gui_controller.show_error")
 def show_error(text: str):
     data = read_config()
     data["errors"]["visible"] = True
     data["errors"]["text"] = text
     write_config(data)
 
+@track_latency("gui_controller.move_window")
 def move_window(box_name: str, target_zone: str):
     layout = get_layout()
     if box_name in layout:
@@ -216,6 +234,7 @@ def move_window(box_name: str, target_zone: str):
         return True
     return False
 
+@track_latency("gui_controller.pin_window")
 def pin_window(box_name: str, pin: bool):
     layout = get_layout()
     if box_name in layout:
@@ -224,6 +243,7 @@ def pin_window(box_name: str, pin: bool):
         return True
     return False
 
+@track_latency("gui_controller.set_video_control")
 def set_video_control(action: str, value=None):
     data = read_config()
     if "videoControls" not in data:

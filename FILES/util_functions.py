@@ -3,6 +3,7 @@ import sys
 import os
 import speech_recognition as sr
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
@@ -20,6 +21,7 @@ except ImportError as e:
 # Initialize the pocket TTS voice module
 ALFRED_VOICE = AlfredVoiceModule(voice_name="peter_yearsley")
 
+@track_latency("util_functions.is_online")
 def is_online(host="8.8.8.8", port=53, timeout=2) -> bool:
     """Checks if internet is connected."""
     try:
@@ -28,12 +30,14 @@ def is_online(host="8.8.8.8", port=53, timeout=2) -> bool:
     except OSError:
         return False
 
+@track_latency("util_functions.multi_replace")
 def multi_replace(text: str, replacements: dict) -> str:
     """Replaces multiple strings based on a dictionary of {old: new}."""
     for old, new in replacements.items():
         text = text.replace(old, new)
     return text
 
+@track_latency("util_functions.speak")
 def speak(text: str = None) -> None:
     """Text to Speech function."""
     if not text:
@@ -45,6 +49,7 @@ def speak(text: str = None) -> None:
     logger.info(f"Speaking: '{text}'")
     ALFRED_VOICE.speak(text)
 
+@track_latency("util_functions.listen_command")
 def listen_command() -> str:
     """Listens to the user speech using speech_recognition."""
     from FILES.gui_controller import set_input_mode
@@ -73,6 +78,7 @@ def listen_command() -> str:
             set_input_mode(False, "")
             return None
 
+@track_latency("util_functions.search_files")
 def search_files(filename: str, search_path="C:\\", is_commanded:bool=False, to_find:int=5) -> str:
     """Searches for files matching filename in search_path."""
     results = []

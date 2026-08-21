@@ -2,6 +2,7 @@ import win32gui
 import win32con
 import pygetwindow as gw
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
@@ -19,6 +20,7 @@ class Window:
             logger.warning(f"No window found with title containing: '{self.window_name}'")
             raise RuntimeError(f"Window '{self.window_name}' not found.")
 
+    @track_latency("Window.bring_to_front")
     def bring_to_front(self) -> None:
         """Brings selected window to front."""
         logger.debug(f"Activating window: '{self.window_name}'")
@@ -27,6 +29,7 @@ class Window:
         except Exception as e:
             logger.error(f"Failed to activate window '{self.window_name}': {e}")
 
+    @track_latency("Window.resize")
     def resize(self, x: int, y: int) -> None:
         """Resizes the selected window."""
         logger.info(f"Resizing window '{self.window_name}' to width: {x}, height: {y}")
@@ -35,6 +38,7 @@ class Window:
         except Exception as e:
             logger.error(f"Failed to resize window '{self.window_name}': {e}")
 
+    @track_latency("Window.move_to")
     def move_to(self, x: int, y: int) -> None:
         """Moves the selected window."""
         logger.info(f"Moving window '{self.window_name}' to x: {x}, y: {y}")

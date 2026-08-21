@@ -3,6 +3,7 @@ memory.py — Short-term RAM cache + Long-term SQLite persistence for ALFRED.
 """
 
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
@@ -29,11 +30,13 @@ class Memory:
         self._ltm = LongTermMemory()
         self._ltm.start_session()
 
+    @track_latency("Memory.remember")
     def remember(self, key, value):
         """Sets a key in self.store to value"""
         logger.debug(f"Memory remember key: '{key}'")
         self.store[key] = value
 
+    @track_latency("Memory.clean_history")
     def clean_history(self):
         """Clears every session conversions"""
         logger.info("Cleaning short-term conversation history cache.")
@@ -41,12 +44,14 @@ class Memory:
         for _ in range(length - (int(length / 2))):
             self.store["conversation_history"].pop(0)
 
+    @track_latency("Memory.recall")
     def recall(self, key):
         """Retrieves value for key in (self.store)"""
         val = self.store.get(key, "")
         logger.debug(f"Memory recall key '{key}'")
         return val
 
+    @track_latency("Memory.add_to_history")
     def add_to_history(self, prompt, response) -> None:
         """Adds (user_input and reply) to history — persists to SQLite"""
         logger.info("Adding interaction exchange to history cache and SQLite LTM.")
@@ -67,12 +72,14 @@ class Memory:
             self.session_end()
         self._calls += 1
 
+    @track_latency("Memory.get_history")
     def get_history(self) -> str:
         """Returns session chats in string"""
         return "\n".join(
             f"User: {q}\nButler: {a}" for q, a in self.store["conversation_history"]
         )
 
+    @track_latency("Memory.session_end")
     def session_end(self, generate_summary: bool = True) -> None:
         """
         Ends the current session. 
@@ -101,6 +108,7 @@ class Memory:
             
         self.store["session_history"] = []
 
+    @track_latency("Memory.get_previous_chats")
     def get_previous_chats(self, limit: int = 20) -> list:
         """
         Return a list of previous chats from long-term memory.
@@ -120,6 +128,7 @@ class Memory:
             logger.error(f"Failed to fetch previous chats: {e}", exc_info=True)
             return []
 
+    @track_latency("Memory.Check_for_in_chats")
     def Check_for_in_chats(self, text: str) -> str:
         """
         Search for previous replies containing text.

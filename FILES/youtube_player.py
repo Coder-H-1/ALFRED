@@ -4,6 +4,7 @@ except ImportError:
     from util_functions import speak     
 
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
@@ -11,6 +12,7 @@ logger = get_logger(__name__)
 player = None
 VOLUME_YOUTUBE = 100
 
+@track_latency("youtube_player.play_youtube_audio")
 def play_youtube_audio(query: str) -> str:
     """Fetches video URL from YouTube using yt_dlp and sends it to the GUI."""
     speak("Let me fetch that, sir.")
@@ -40,6 +42,7 @@ def play_youtube_audio(query: str) -> str:
         logger.error(f"YouTube yt_dlp search error: {e}", exc_info=True)
         return "I'm sorry, finding the video failed due to YouTube restrictions or an error."
 
+@track_latency("youtube_player.stop_youtube_audio")
 def stop_youtube_audio() -> str:
     """Stops YouTube playback by clearing GUI data."""
     logger.info("Stopping YouTube playback")
@@ -47,6 +50,7 @@ def stop_youtube_audio() -> str:
     show_data([])
     return "Stopped YouTube playback, sir."
         
+@track_latency("youtube_player.set_volume_youtube")
 def set_volume_youtube() -> None:
     """Stub to keep backward compatibility with volume requests."""
     global VOLUME_YOUTUBE

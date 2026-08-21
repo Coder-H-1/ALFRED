@@ -24,17 +24,21 @@ import random
 from llama_cpp import Llama
 from FILES.util_functions import multi_replace, MEMORY
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
+@track_latency("utils.get_time")
 def get_time() -> str:
     now = datetime.datetime.now()
     return now.strftime("It is %I:%M %p, sir.")  # 12-hour format
 
+@track_latency("utils.get_date")
 def get_date() -> str:
     today = datetime.datetime.now()
     return today.strftime("Today is %A, %d %B %Y.")
 
+@track_latency("utils.get_greeting")
 def get_greeting() -> str:
     hour = datetime.datetime.now().hour
     _time = get_time().replace("It is ", "The time is ").replace(", sir." , "")
@@ -54,6 +58,7 @@ def get_greeting() -> str:
     MEMORY.add_to_history(Time_and_Date, greet)
     return greet
     
+@track_latency("utils.clear_Memory")
 def clear_Memory() -> None:
     logger.info("Cleaning conversation history memory.")
     MEMORY.clean_history()
@@ -77,6 +82,7 @@ LLM = Llama(
     verbose=False 
 )
 
+@track_latency("utils.Responder")
 def Responder(prompt: str) -> str:
     logger.info(f"LLM Responder received prompt: '{prompt}'")
     MEMORY.remember("last_command", prompt) 

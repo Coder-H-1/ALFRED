@@ -4,6 +4,7 @@ from FILES.model_manager import ModelManager, MODELS
 from FILES.long_term_memory import LongTermMemory
 from FILES.gui_controller import move_window, pin_window, set_video_control, show_data, hide_all, hide_transient_boxes
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
@@ -63,19 +64,18 @@ APP_REGISTRY = {
     "firefox":          {"open": "start firefox.exe", "process": "firefox.exe", "name": "Firefox"},
     "browser":          {"open": "start firefox.exe", "process": "firefox.exe", "name": "Firefox"},
     "calculator":       {"open": "start calc", "process": "calc.exe", "name": "Calculator"},
-    "whatsapp":         {"open": "start shell:AppsFolder\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App", "process": "whatsapp.exe", "name": "WhatsApp"},
-    "chats":            {"open": "start shell:AppsFolder\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App", "process": "whatsapp.exe", "name": "WhatsApp"},
 }
 
 WEB_REGISTRY = {
     "youtube music":    {"url": "https://music.youtube.com", "name": "Youtube Music in browser"},
-    "stack overflow":   {"url": "stackoverflow.com", "name": "stackoverflow"},
-    "google":           {"url": "google.com", "name": "Google"},
-    "search":           {"url": "google.com", "name": "Google"},
-    "chatter":          {"url": "chatgpt.com", "name": "ChatGPT"},
-    "chatgpt":          {"url": "chatgpt.com", "name": "ChatGPT"},
+    "stack overflow":   {"url": "https://www.stackoverflow.com", "name": "stackoverflow"},
+    "google":           {"url": "https://www.google.com", "name": "Google"},
+    "search":           {"url": "https://www.google.com", "name": "Google"},
+    "chatter":          {"url": "https://www.chatgpt.com", "name": "ChatGPT"},
+    "chatgpt":          {"url": "https://www.chatgpt.com", "name": "ChatGPT"},
 }
 
+@track_latency("commands.close_application_through_cmd")
 def close_application_through_cmd(process_name:str, return_response:str = None) -> str:
     logger.info(f"Attempting to close process: {process_name}")
     if " " in process_name:
@@ -83,6 +83,7 @@ def close_application_through_cmd(process_name:str, return_response:str = None) 
     os.system(f"taskkill /f /im {process_name}")
     return return_response or f"Closed {process_name}"
 
+@track_latency("commands.process_command")
 def process_command(command:str, Intent:str=None) -> str:
     logger.info(f"Processing command: '{command}' with Intent: '{Intent}'")
     global VOLUME_YOUTUBE

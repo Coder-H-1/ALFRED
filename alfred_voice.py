@@ -11,9 +11,11 @@ from pocket_tts import TTSModel
 
 import re
 from concurrent.futures import ThreadPoolExecutor
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = logging.getLogger(__name__)
 
+@track_latency("alfred_voice.chunk_text")
 def chunk_text(text: str, max_words: int = 30) -> list[str]:
     """
     Splits text into chunks of maximum max_words. If a chunk does not end
@@ -109,6 +111,7 @@ class AlfredVoiceModule:
             logger.error(f"Failed to initialize AlfredVoiceModule: {e}")
             self.is_initialized = False
 
+    @track_latency("AlfredVoiceModule.speak")
     def speak(self, text: str) -> None:
         """
         Strictly typed speak method. Chunks the text, submits to executor for 
@@ -150,6 +153,7 @@ class AlfredVoiceModule:
             finally:
                 self.generation_queue.task_done()
 
+    @track_latency("AlfredVoiceModule._generate_audio_tensor")
     def _generate_audio_tensor(self, text: str):
         """Worker function that generates audio latents for a single chunk."""
         try:

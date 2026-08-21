@@ -3,9 +3,11 @@ from bs4 import BeautifulSoup
 import urllib.parse
 from duckduckgo_search import DDGS
 from FILES.logger import get_logger
+from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
+@track_latency("web_search_extractor.extract_web_data")
 def extract_web_data(query: str, max_results: int = 5, max_images: int = 5) -> dict:
     """
     Extracts data from web searches for a given query locally.
