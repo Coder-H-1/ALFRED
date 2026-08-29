@@ -31,9 +31,15 @@ def play_youtube_audio(query: str) -> str:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(f"ytsearch1:{query}", download=False)
             if 'entries' in info and len(info['entries']) > 0:
-                video_url = info['entries'][0]['url']
-                logger.info(f"Found YouTube video URL: {video_url}")
-                show_data([f"video:{video_url}"])
+                entry = info['entries'][0]
+                video_id = entry.get('id')
+                if video_id:
+                    logger.info(f"Found YouTube video ID: {video_id}")
+                    show_data([f"youtube:{video_id}"])
+                else:
+                    video_url = entry['url']
+                    logger.warning(f"No YouTube video ID found, falling back to URL: {video_url}")
+                    show_data([f"video:{video_url}"])
                 return "[KEEP_UI] Playing from YouTube."
             else:
                 logger.warning(f"No YouTube entries found for query: '{query}'")

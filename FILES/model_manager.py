@@ -25,8 +25,8 @@ class ModelManager:
         self.filename = os.path.join(_BASE_DIR, "FILES", "intents.jsonl")
 
     @track_latency("ModelManager.load_model")
-    def load_model(self, model_path:str, name:str, context_len: int) -> None:
-        """Loads LLM model in self.model."""
+    def load_model(self, model_path:str, name:str, context_len: int, type_k: int = None, type_v: int = None) -> None:
+        """Loads LLM model in self.model with optional quantized KV-cache."""
         if not os.path.exists(model_path): 
             logger.warning(f"Requested model path does not exist: {model_path}")
             speak("You currently don't have model for specified function. I don't actually know what to do.")
@@ -35,15 +35,21 @@ class ModelManager:
         if self.model is not None:
             self.unload_model()
 
-        logger.info(f"Loading model: {name} from path: {model_path} (context: {context_len})")
+        logger.info(f"Loading model: {name} from path: {model_path} (context: {context_len}, type_k: {type_k}, type_v: {type_v})")
         try:
-            self.model = Llama(
-                model_path=model_path,
-                n_ctx=int(context_len),
-                n_threads=8,
-                n_batch=256,
-                verbose=False,
-            )
+            llama_kwargs = {
+                "model_path": model_path,
+                "n_ctx": int(context_len),
+                "n_threads": 8,
+                "n_batch": 256,
+                "verbose": False,
+            }
+            if type_k is not None:
+                llama_kwargs["type_k"] = int(type_k)
+            if type_v is not None:
+                llama_kwargs["type_v"] = int(type_v)
+
+            self.model = Llama(**llama_kwargs)
             self.current_model_name = str(name)
             logger.info(f"Successfully loaded model: {name}")
         except Exception as e:

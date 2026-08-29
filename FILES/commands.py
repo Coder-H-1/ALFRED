@@ -84,8 +84,8 @@ def close_application_through_cmd(process_name:str, return_response:str = None) 
     return return_response or f"Closed {process_name}"
 
 @track_latency("commands.process_command")
-def process_command(command:str, Intent:str=None) -> str:
-    logger.info(f"Processing command: '{command}' with Intent: '{Intent}'")
+def process_command(command:str) -> str:
+    logger.info(f"Processing command: '{command}'")
     global VOLUME_YOUTUBE
     
     command = multi_replace(str(command), {"open": "$", "start": "$", "close": "&", "end": "&"})
@@ -234,7 +234,7 @@ def process_command(command:str, Intent:str=None) -> str:
             if not api_key:
                 return "No OpenWeatherKey found in environment variables, sir."
             
-            logger.info("Fetching weather locally...")
+            logger.info("Fetching weather...")
             ip_info = requests.get("http://ip-api.com/json/", timeout=5).json()
             lat = ip_info.get("lat")
             lon = ip_info.get("lon")

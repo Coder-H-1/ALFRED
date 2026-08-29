@@ -32,7 +32,7 @@ def filter_speech(text):
     text = re.sub(r'\*.*?\*', '', text)
     return text.strip()
 
-COMMAND_INPUT = True # if True then we can type the command else it will listen the command
+COMMAND_INPUT = False # if True then we can type the command else it will listen the command
 
 def start_gui_server():
     logger.info("Starting Next.js GUI Dev Server...")

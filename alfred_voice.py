@@ -16,7 +16,7 @@ from FILES.LATENCY_RECORDER import track_latency
 logger = logging.getLogger(__name__)
 
 @track_latency("alfred_voice.chunk_text")
-def chunk_text(text: str, max_words: int = 30) -> list[str]:
+def chunk_text(text: str, max_words: int = 25) -> list[str]:
     """
     Splits text into chunks of maximum max_words. If a chunk does not end
     with punctuation, looks ahead up to 8 words to find a punctuation mark
@@ -46,9 +46,9 @@ def chunk_text(text: str, max_words: int = 30) -> list[str]:
             chunks.append(" ".join(words[i : i + max_words]))
             i += max_words
         else:
-            # Look ahead up to 8 words for punctuation
+            # Look ahead up to 10 words for punctuation
             found_idx = -1
-            for j in range(i + max_words, min(i + max_words + 8, n)):
+            for j in range(i + max_words, min(i + max_words + 10, n)):
                 if ends_with_punctuation(words[j]):
                     found_idx = j
                     break
@@ -68,7 +68,7 @@ class AlfredVoiceModule:
     Runs on CPU, chunks text, generates chunks simultaneously via ThreadPool, 
     and plays them sequentially.
     """
-    def __init__(self, voice_name: str = "peter_yearsley", sample_rate: int = 24000):
+    def __init__(self, voice_name: str = "peter_yearsley", sample_rate: int = 23500):
         self.voice_name = voice_name
         self.sample_rate = sample_rate
         self.model = None
@@ -83,7 +83,7 @@ class AlfredVoiceModule:
         self._shutdown_flag = threading.Event()
         
         # Executor for simultaneous chunk generation
-        self.executor = ThreadPoolExecutor(max_workers=3)
+        self.executor = ThreadPoolExecutor(max_workers=4)
         
         # Start initialization
         self._initialize()
@@ -124,7 +124,7 @@ class AlfredVoiceModule:
         if not text or not text.strip():
             return
 
-        chunks = chunk_text(text, max_words=30) # Reduced to 30 to guarantee staying under 50 tokens
+        chunks = chunk_text(text, max_words=25) # Reduced to 25 to guarantee staying under 50 tokens
         logger.debug(f"Split text into {len(chunks)} chunks. Queuing for generation.")
         
         # Queue chunks to be managed by the generation thread
@@ -190,7 +190,7 @@ class AlfredVoiceModule:
                 audio_array = future.result() 
                 
                 if audio_array is not None:
-                    # Pad with 50ms silence at the start and 100ms at the end to prevent cutoffs
+                    # Pad with 100ms silence at the start and 150ms at the end to prevent cutoffs
                     start_pad = np.zeros((int(self.sample_rate * 0.1), 1), dtype=audio_array.dtype)
                     end_pad = np.zeros((int(self.sample_rate * 0.15), 1), dtype=audio_array.dtype)
                     padded_audio = np.vstack((start_pad, audio_array, end_pad))
