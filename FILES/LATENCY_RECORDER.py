@@ -318,8 +318,8 @@ def track_latency(source: str = None):
 
 # ─── CLI ──────────────────────────────────────────────────────────────────────
 
-def _cli_show(date_str: str, lines_limit: int = 50, function_filter: str = None):
-    """--show <date> [--lines <N>] [--function-name <name>]"""
+def _cli_show(date_str: str, lines_limit: int = 50, function_filter: str = None, sub_name_filter: str = None):
+    """--show <date> [--lines <N>] [--function-name <name>] [--sub-name <name>]"""
     recorder = LatencyRecorder()
     lines = recorder.read_records(date_str)
 
@@ -331,25 +331,43 @@ def _cli_show(date_str: str, lines_limit: int = 50, function_filter: str = None)
     print(f"║  ALFRED LATENCY LOGS — DATE: {date_str:<48} ║")
     print(f"╠════════════════════════════════════════════════════════════════════════════════╣")
 
-    if function_filter:
-        print(f"║  Filter: Function '{function_filter}' (showing all matching records)               ║")
+    if function_filter or sub_name_filter:
+        filter_desc = []
+        if function_filter:
+            filter_desc.append(f"Function: '{function_filter}'")
+        if sub_name_filter:
+            filter_desc.append(f"Sub-name: '{sub_name_filter}'")
+        desc_str = " | ".join(filter_desc)
+        print(f"║  Filter: {desc_str:<69} ║")
         print(f"╚════════════════════════════════════════════════════════════════════════════════╝\n")
         
-        filter_lower = function_filter.lower()
         matched = []
+        fn_lower = function_filter.lower() if function_filter else None
+        sn_lower = sub_name_filter.lower() if sub_name_filter else None
+
         for line in lines:
+            target_name = ""
             if line.startswith("SUMMARY:"):
                 # SUMMARY: <function-name>, ...
                 parts = line[8:].split(",")
-                if parts and filter_lower in parts[0].strip().lower():
-                    matched.append(line)
+                if parts:
+                    target_name = parts[0].strip().lower()
             else:
                 parts = line.split(",")
-                if parts and filter_lower in parts[0].strip().lower():
-                    matched.append(line)
+                if parts:
+                    target_name = parts[0].strip().lower()
+
+            if not target_name:
+                continue
+
+            match_fn = (fn_lower in target_name) if fn_lower else True
+            match_sn = (sn_lower in target_name) if sn_lower else True
+
+            if match_fn and match_sn:
+                matched.append(line)
 
         if not matched:
-            print(f"  No records found for function matching '{function_filter}'.\n")
+            print(f"  No records found matching filters.\n")
             return
 
         for m in matched:
@@ -421,9 +439,11 @@ def _cli_help():
 ║    --lines <number>        Number of lines to show with --show (int).    ║
 ║                            e.g. --show 2026-09-01 --lines 100            ║
 ║                                                                          ║
-║    --function-name <name>  Show all logs and summary for specified       ║
-║                            function name irrespective of line limit.     ║
-║                            e.g. --show 2026-09-01 --function-name utils  ║
+║    --function-name <name>  Show all logs for function name prefix.       ║
+║                            e.g. --function-name commands.process_command ║
+║                                                                          ║
+║    --sub-name <name>       Show all logs matching sub-name.              ║
+║                            e.g. --sub-name youtube_volume                ║
 ║                                                                          ║
 ║    --list                  List all available date log files & status.   ║
 ║                                                                          ║
@@ -446,6 +466,7 @@ if __name__ == "__main__":
     parser.add_argument("--show", type=str, default=None, help="Date to inspect (YYYY-MM-DD)")
     parser.add_argument("--lines", type=int, default=50, help="Max lines to display")
     parser.add_argument("--function-name", "--function", type=str, default=None, dest="function_name", help="Filter by function name")
+    parser.add_argument("--sub-name", "--sub", type=str, default=None, dest="sub_name", help="Filter by sub-name")
     parser.add_argument("--list", action="store_true", help="List all dates")
     parser.add_argument("--clean", action="store_true", help="Clean old records")
     parser.add_argument("--help", "-h", action="store_true", help="Show help")
@@ -459,10 +480,10 @@ if __name__ == "__main__":
     elif args.clean:
         _cli_clean()
     elif args.show:
-        _cli_show(args.show, lines_limit=args.lines, function_filter=args.function_name)
-    elif args.function_name:
-        # If --function-name provided without --show, default to today
+        _cli_show(args.show, lines_limit=args.lines, function_filter=args.function_name, sub_name_filter=args.sub_name)
+    elif args.function_name or args.sub_name:
+        # If filters provided without --show, default to today
         today_str = datetime.now().strftime("%Y-%m-%d")
-        _cli_show(today_str, lines_limit=args.lines, function_filter=args.function_name)
+        _cli_show(today_str, lines_limit=args.lines, function_filter=args.function_name, sub_name_filter=args.sub_name)
     else:
         _cli_help()

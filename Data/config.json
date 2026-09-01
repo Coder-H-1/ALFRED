@@ -1,15 +1,17 @@
 {
     "showBox": {
-        "visible": false,
+        "visible": true,
         "data": [
-            "youtube:rSxTumD4kew"
+            "http://images4.fanpop.com/image/photos/16900000/The-Time-black-eyed-peas-16941730-1200-1200.jpg",
+            "https://www.guideoftheworld.com/map/world/time-zone/time-zone-map-and-the-world.jpg",
+            "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiYLy-SSmjdxkye7I6odrTpJZYOo1qGWP8y-EzB6wd-32J_LnquKRZzlpRt9KZsgUwLjzAwWS1eMFKXJMTbLqLqGAxqj6UttGYG80IyOUEydDRjqvbW1pbCzKLiNkHSFXTJpeGbYMm4WcaR/s1600/Black+Eyed+Peas+%E2%80%93+The+Time.jpg"
         ],
         "zone": "focus"
     },
     "answerBox": {
         "visible": true,
         "text": "Good morning, sir. I'm happy to help you with your music request. \"California Love\" by 2Pac is a classic. Would you like me to play it for you?\n\n The song \"California Love\" by 2Pac is now playing.\n\n I can see that you want to hear \"California Love\" by 2Pac again. I can certainly play it for you. Would you like me to adjust the volume or skip to a different part of the song?\n\n Playing from YouTube.\n\n I'll search for \"memory\" on the web.\nButler:  I found a few songs with the title \"Memory\". Would you like me to play any of them for you?\n\n I apologize, but I didn't quite catch that. Could you please repeat the request?",
-        "zone": "focus"
+        "zone": "active"
     },
     "logs": {
         "visible": false,
