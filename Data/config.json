@@ -1,28 +1,27 @@
 {
     "showBox": {
-        "visible": true,
+        "visible": false,
         "data": [
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Tesla_circa_1890.jpeg/500px-Tesla_circa_1890.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
-            "https://energysavings.com/wp-content/uploads/2024/01/nikola-tesla-illustration.jpeg",
-            "https://cms.interestingengineering.com/wp-content/uploads/2024/02/Nikola-Tesla.jpg"
+            "youtube:rSxTumD4kew"
         ],
         "zone": "focus"
     },
     "answerBox": {
         "visible": true,
-        "text": "Opening Workspace.\n\n Ah, I see. You'd like me to use more...  ...formal vocabulary, sir? I shall endeavour to do so. Instead of saying \"open workspace\", I shall say \"initiate workspace protocol\".  Is that more to your liking, sir?\n\n I shall prepare a comprehensive report on the weather conditions, sir.  According to my data, the global temperature is currently at -2.5 degrees Celsius, with a high-pressure system dominating the weather patterns. The atmospheric pressure is at 1013 millibars, and the humidity is at 60%.  Shall I also provide a forecast for the next 24 hours, sir?\n\n 24-hour weather forecast is available for review.  A high-pressure system will continue to dominate the weather patterns, with partly cloudy skies expected in most regions. Temperatures will remain steady, ranging from 10\u00b0C to 15\u00b0C globally. However, scattered thunderstorms are predicted in certain areas, with a 30% chance of precipitation. Shall I provide more detailed information, sir?\n\n I have retrieved the work schedule for tomorrow, sir.  You have a meeting with the marketing team at 10:00 AM to discuss the new product launch campaign. Additionally, you have a one-on-one meeting with your assistant at 2:00 PM to review your tasks and goals for the quarter. There are no other scheduled meetings or appointments for tomorrow. Shall I also send reminders to the team members and the marketing team, sir?\n\n Reminders have been sent to the team members and the marketing team, sir.  Meeting with Marketing Team at 10:00 AM - Reminder Sent. One-on-One Meeting with Assistant at 2:00 PM - Reminder Sent. Shall I also provide a calendar summary for the week, sir?\n\n I'm glad you asked, sir. I can assist you with a variety of tasks, such as:\n* Making travel arrangements\n* Booking appointments with clients\n* Researching and providing information on various topics\n* Generating reports and summaries\n* Providing translations and language assistance\n* And many more, sir. What specific task or request would you like me to attend to, sir?\n\n I'm listening, sir. Please proceed with your request.\n\n",
-        "zone": "active"
+        "text": "Good morning, sir. I'm happy to help you with your music request. \"California Love\" by 2Pac is a classic. Would you like me to play it for you?\n\n The song \"California Love\" by 2Pac is now playing.\n\n I can see that you want to hear \"California Love\" by 2Pac again. I can certainly play it for you. Would you like me to adjust the volume or skip to a different part of the song?\n\n Playing from YouTube.\n\n I'll search for \"memory\" on the web.\nButler:  I found a few songs with the title \"Memory\". Would you like me to play any of them for you?\n\n I apologize, but I didn't quite catch that. Could you please repeat the request?",
+        "zone": "focus"
     },
     "logs": {
-        "visible": true,
-        "text": "[22:31:29] Query received: exit system\n",
+        "visible": false,
+        "text": "[10:47:59] Query received: clear your\n[10:47:59] Checking for dynamic plugins...\n[10:47:59] No dynamic plugin matched. Checking system actions...\n[10:47:59] No system action matched. Falling back to default Responder...\n[10:48:04] Response generated and spoken.\n",
         "zone": "passive"
     },
     "functionCalls": {
-        "visible": true,
+        "visible": false,
         "calls": [
             "Command Listener",
-            "Intent Matcher"
+            "Intent Matcher",
+            "Responder"
         ],
         "zone": "rapid"
     },
@@ -34,9 +33,9 @@
         "text": "",
         "zone": "update"
     },
-    "queryActive": true,
+    "queryActive": false,
     "commandInput": false,
-    "statusText": "",
+    "statusText": "Listening...",
     "videoControls": {
         "muted": false,
         "audioOnly": false,

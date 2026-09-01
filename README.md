@@ -24,7 +24,9 @@ The project runs entirely locally using GGUF-format models via `llama_cpp`, ensu
 6. **Next.js Web Interface**: Beautiful interactive GUI visualizer displaying logs, active query status, dynamic visual components, error popups, and media outputs.
 7. **Detachable Plugin Hot-Loading**: Connects with the Octopus compiler framework over local socket connections to dynamically hot-reload python modules at runtime.
 8. **Real-time Resource Monitoring**: Integrated CPU/RAM stats collector for system status feedback and voice status responses.
-9. **Environment Hardening**: All backend routing connections are dynamically resolved through `.env` configurations.
+9. **Thread-Safe Daily Latency Profiling**: Automatically tracks execution latency across all core functions with high-precision sub-second tracking, daily file segregation, exit grouping by function, and summary metrics.
+10. **Native Log Compression & Archiving**: Custom binary compression (`.compressed_logs` with magic header `ALF1`, CRC32 validation, and zlib level 9 compression) for rotated daily logs and latency traces.
+11. **Environment Hardening**: All backend routing connections are dynamically resolved through `.env` configurations.
 
 ---
 
@@ -42,7 +44,7 @@ Project/
 ├── main.py               # Main application entry point
 ├── README.md             # Project documentation
 ├── requirements.txt      # Python dependencies manifest
-├── version.py            # Project versioning and metadata variables
+├── version.py            # Project constants and network metadata
 ├── Data/                 # GUI settings, config, and layout states
 │   ├── config.json       # Interactive layout widgets configuration
 │   ├── layout_state.json # Pinned and layout zones memory
@@ -51,6 +53,8 @@ Project/
 │   ├── commands.py       # Core mapped system command routines
 │   ├── gui_controller.py # Configuration and GUI interaction module
 │   ├── intent.py         # Experimental intent classifier / BERT trainer
+│   ├── LATENCY_RECORDER.py # Thread-safe file-based latency profiler & CLI
+│   ├── log_compressor.py # Custom binary log compressor (.compressed_logs)
 │   ├── logger.py         # Centralized timed rotating daily log handler
 │   ├── long_term_memory.py # Standalone SQLite conversation memory database
 │   ├── memory.py         # RAM cache / LTM integration layer
@@ -170,11 +174,34 @@ python main.py
 
 ---
 
-## System Logging
+## System Logging & Latency Tracking
 
+### 1. Operations Logging
 All application executions, requests, socket connections, and exceptions are logged to:
 - Console outputs
 - **`logs/alfred.log`** (Rotates daily, retains last 7 days of debug logs)
+- Rotated logs are automatically compressed to `.compressed_logs` on shutdown via `FILES/log_compressor.py`.
+
+### 2. Latency Profiler & CLI
+Latency is captured on a per-call basis via the `@track_latency` decorator and written to `logs/latency/YYYY-MM-DD.log`. On application shutdown (`atexit`), logs are automatically reorganized by function name, annotated with summary statistics, and compressed.
+
+Inspect latency metrics via the CLI:
+```bash
+# Decompress and show first 50 lines of a specific date
+python .\FILES\LATENCY_RECORDER.py --show 2026-09-01
+
+# Limit number of lines displayed
+python .\FILES\LATENCY_RECORDER.py --show 2026-09-01 --lines 20
+
+# Filter records and summaries for a specific function
+python .\FILES\LATENCY_RECORDER.py --show 2026-09-01 --function-name commands.process_command
+
+# List all available recorded dates and archive sizes
+python .\FILES\LATENCY_RECORDER.py --list
+
+# Clean up records older than 15 days
+python .\FILES\LATENCY_RECORDER.py --clean
+```
 
 ---
 

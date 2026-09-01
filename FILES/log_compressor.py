@@ -36,7 +36,7 @@ def _postprocess_bytes(data: bytes) -> str:
         text = text.replace(marker, token)
     return text
 
-def compress_log(log_path: str, output_path: str = None) -> str:
+def compress_log(log_path: str, output_path: str = None, force: bool = False) -> str:
     """Compresses a .log file into .compressed_logs format.
     
     Header structure (12 bytes):
@@ -50,7 +50,7 @@ def compress_log(log_path: str, output_path: str = None) -> str:
         return None
 
     orig_size = os.path.getsize(log_path)
-    if orig_size < MIN_COMPRESS_SIZE:
+    if not force and orig_size < MIN_COMPRESS_SIZE:
         logger.info(f"Skipping compression for {os.path.basename(log_path)} (Size {orig_size} B < {MIN_COMPRESS_SIZE} B threshold)")
         return None
 
@@ -77,7 +77,7 @@ def compress_log(log_path: str, output_path: str = None) -> str:
             f.write(compressed_payload)
 
         comp_size = os.path.getsize(output_path)
-        savings = (1.0 - (comp_size / orig_size)) * 100.0
+        savings = (1.0 - (comp_size / orig_size)) * 100.0 if orig_size > 0 else 0.0
         logger.info(f"Compressed {os.path.basename(log_path)}: {orig_size/1024:.2f}KB -> {comp_size/1024:.2f}KB ({savings:.1f}% savings)")
 
         # Delete original log file after successful compression
@@ -87,17 +87,11 @@ def compress_log(log_path: str, output_path: str = None) -> str:
         logger.error(f"Failed to compress log file {log_path}: {e}", exc_info=True)
         return None
 
-def decompress_log(compressed_path: str, output_path: str = None) -> str:
-    """Decompresses a .compressed_logs file back to original .log file format."""
+def read_compressed_log(compressed_path: str) -> str:
+    """Reads and decompresses a .compressed_logs file into text in memory without modifying the file."""
     if not os.path.exists(compressed_path):
         logger.warning(f"Compressed file not found: {compressed_path}")
-        return None
-
-    if output_path is None:
-        if compressed_path.endswith(".compressed_logs"):
-            output_path = compressed_path[:-16]
-        else:
-            output_path = compressed_path + ".log"
+        return ""
 
     try:
         with open(compressed_path, 'rb') as f:
@@ -120,13 +114,36 @@ def decompress_log(compressed_path: str, output_path: str = None) -> str:
         if actual_crc32 != expected_crc32:
             raise ValueError(f"CRC32 Checksum Mismatch! File corrupt. Expected {hex(expected_crc32)}, got {hex(actual_crc32)}")
 
-        with open(output_path, 'wb') as f:
-            f.write(raw_bytes)
+        return restored_text
+    except Exception as e:
+        logger.error(f"Failed to read compressed log file {compressed_path}: {e}", exc_info=True)
+        return ""
+
+def decompress_log(compressed_path: str, output_path: str = None, remove_compressed: bool = True) -> str:
+    """Decompresses a .compressed_logs file back to original .log file format."""
+    if not os.path.exists(compressed_path):
+        logger.warning(f"Compressed file not found: {compressed_path}")
+        return None
+
+    if output_path is None:
+        if compressed_path.endswith(".compressed_logs"):
+            output_path = compressed_path[:-16]
+        else:
+            output_path = compressed_path + ".log"
+
+    try:
+        restored_text = read_compressed_log(compressed_path)
+        if not restored_text and os.path.getsize(compressed_path) > 12:
+            return None
+
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(restored_text)
 
         logger.info(f"Decompressed {os.path.basename(compressed_path)} -> {os.path.basename(output_path)} (CRC32 Verified)")
         
-        # Remove compressed file after successful decompression
-        os.remove(compressed_path)
+        # Remove compressed file after successful decompression if requested
+        if remove_compressed:
+            os.remove(compressed_path)
         return output_path
     except Exception as e:
         logger.error(f"Failed to decompress log file {compressed_path}: {e}", exc_info=True)

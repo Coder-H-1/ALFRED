@@ -1,43 +1,52 @@
 """
 LATENCY_RECORDER.py — Performance latency tracker for ALFRED.
 
-Records per-call latency data into a SQLite database (logs/latency/latency.db).
+Records per-call latency data into thread-safe daily log files (logs/latency/YYYY-MM-DD.log).
+On program exit:
+    - Organizes latency records grouped by function name
+    - Appends summary metrics per function (<function-name>, <average-query-length>, <average-time-taken-seconds>)
+    - Compresses the organized log file using ALFRED's log compression mechanism (.compressed_logs)
+
 Provides:
-    - LatencyRecorder class with thread-safe recording
+    - LatencyRecorder singleton class with thread-safe recording
     - @track_latency decorator for auto-instrumentation
-    - Background daemon thread for periodic reorganisation
-    - CLI interface: --list, --show <source>, --clean, --help
+    - CLI interface: --show <date>, --lines <number>, --function-name <name>, --list, --clean
 
 Usage (standalone):
-    python .\\FILES\\LATENCY_RECORDER.py              # help
-    python .\\FILES\\LATENCY_RECORDER.py --list        # overview report
-    python .\\FILES\\LATENCY_RECORDER.py --show <src>  # per-function summary
-    python .\\FILES\\LATENCY_RECORDER.py --clean       # force cleanup of old records
+    python .\\FILES\\LATENCY_RECORDER.py --show 2026-09-01
+    python .\\FILES\\LATENCY_RECORDER.py --show 2026-09-01 --lines 20
+    python .\\FILES\\LATENCY_RECORDER.py --show 2026-09-01 --function-name commands.process_command
+    python .\\FILES\\LATENCY_RECORDER.py --list
+    python .\\FILES\\LATENCY_RECORDER.py --clean
 """
 
 import os
 import sys
 import time
-import sqlite3
+import atexit
 import threading
 import functools
 import argparse
 from datetime import datetime, timedelta
+from collections import defaultdict
 
-
-# ─── Paths ───────────────────────────────────────────────────────────────────
+# ─── Path & Imports ───────────────────────────────────────────────────────────
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LATENCY_DIR = os.path.join(_BASE_DIR, "logs", "latency")
-DB_PATH = os.path.join(LATENCY_DIR, "latency.db")
-
 RETENTION_DAYS = 15
+
+# Ensure parent directory is in path for imports
+if _BASE_DIR not in sys.path:
+    sys.path.insert(0, _BASE_DIR)
+
+from FILES.log_compressor import compress_log, decompress_log, read_compressed_log
 
 
 # ─── LatencyRecorder ─────────────────────────────────────────────────────────
 
 class LatencyRecorder:
-    """Thread-safe SQLite-backed latency recorder."""
+    """Thread-safe file-based latency recorder with automatic exit reorganization and compression."""
 
     _instance = None
     _lock = threading.Lock()
@@ -50,78 +59,52 @@ class LatencyRecorder:
                     cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self, auto_reorganize: bool = True):
+    def __init__(self):
         if getattr(self, "_initialized", False):
             return
-        self._db_lock = threading.Lock()
+        self._file_lock = threading.Lock()
         os.makedirs(LATENCY_DIR, exist_ok=True)
-        self._init_db()
+        
+        # Register automatic reorganization & compression on program exit
+        atexit.register(self.organize_and_compress_all)
         self._initialized = True
 
-        if auto_reorganize:
-            self._start_reorganizer()
+    # ── Helpers ───────────────────────────────────────────────────────────
 
-    # ── Database Setup ────────────────────────────────────────────────────
+    def _get_log_path(self, date_str: str = None) -> str:
+        """Get active uncompressed log path for a specific date (default today)."""
+        if date_str is None:
+            date_str = datetime.now().strftime("%Y-%m-%d")
+        return os.path.join(LATENCY_DIR, f"{date_str}.log")
 
-    def _get_conn(self) -> sqlite3.Connection:
-        """Create a new connection for the calling thread."""
-        conn = sqlite3.connect(DB_PATH, timeout=10)
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA busy_timeout=5000")
-        return conn
-
-    def _init_db(self):
-        with self._db_lock:
-            conn = self._get_conn()
-            try:
-                conn.executescript("""
-                    CREATE TABLE IF NOT EXISTS records (
-                        id              INTEGER PRIMARY KEY AUTOINCREMENT,
-                        source          TEXT    NOT NULL,
-                        timestamp       TEXT    NOT NULL,
-                        query_length    INTEGER DEFAULT 0,
-                        query_received  REAL    NOT NULL,
-                        output_at       REAL    NOT NULL,
-                        time_taken_ms   REAL    NOT NULL
-                    );
-
-                    CREATE INDEX IF NOT EXISTS idx_records_source    ON records(source);
-                    CREATE INDEX IF NOT EXISTS idx_records_timestamp ON records(timestamp);
-
-                    CREATE TABLE IF NOT EXISTS summaries (
-                        source           TEXT PRIMARY KEY,
-                        call_count       INTEGER DEFAULT 0,
-                        avg_time_ms      REAL    DEFAULT 0.0,
-                        avg_query_length REAL    DEFAULT 0.0,
-                        min_time_ms      REAL    DEFAULT 0.0,
-                        max_time_ms      REAL    DEFAULT 0.0,
-                        last_updated     TEXT    NOT NULL
-                    );
-                """)
-                conn.commit()
-            finally:
-                conn.close()
+    def _get_compressed_path(self, date_str: str = None) -> str:
+        """Get compressed log path for a specific date (default today)."""
+        if date_str is None:
+            date_str = datetime.now().strftime("%Y-%m-%d")
+        return os.path.join(LATENCY_DIR, f"{date_str}.log.compressed_logs")
 
     # ── Core Recording ────────────────────────────────────────────────────
 
     def record(self, source: str, query_length: int,
                query_received_at: float, output_at: float):
-        """Insert one latency record."""
-        time_taken_ms = (output_at - query_received_at) * 1000.0
-        ts = datetime.now().isoformat(timespec="milliseconds")
-
-        with self._db_lock:
-            conn = self._get_conn()
+        """Write one thread-safe latency record to the daily log file."""
+        duration = max(0.0, output_at - query_received_at)
+        
+        # Format timestamps
+        req_dt = datetime.fromtimestamp(query_received_at).strftime("%Y-%m-%d %H:%M:%S.%f")[:-1]
+        out_dt = datetime.fromtimestamp(output_at).strftime("%Y-%m-%d %H:%M:%S.%f")[:-1]
+        
+        # Record format: <filename.function-name>, <query length>, <query-received-at>, <time-of-output>, <duration float with 5 decimals>s
+        line = f"{source}, {query_length}, {req_dt}, {out_dt}, {duration:.5f}s\n"
+        
+        log_path = self._get_log_path()
+        with self._file_lock:
             try:
-                conn.execute(
-                    """INSERT INTO records
-                       (source, timestamp, query_length, query_received, output_at, time_taken_ms)
-                       VALUES (?, ?, ?, ?, ?, ?)""",
-                    (source, ts, query_length, query_received_at, output_at, time_taken_ms)
-                )
-                conn.commit()
-            finally:
-                conn.close()
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(line)
+                    f.flush()
+            except Exception:
+                pass
 
     def startup_record(self):
         """Write a sentinel record marking program startup."""
@@ -133,140 +116,161 @@ class LatencyRecorder:
             output_at=now
         )
 
-    # ── Cleanup ───────────────────────────────────────────────────────────
+    # ── Exit Reorganization & Compression ─────────────────────────────────
 
-    def cleanup_old(self, days: int = RETENTION_DAYS) -> int:
-        """Delete records older than `days`. Returns count deleted."""
-        cutoff = (datetime.now() - timedelta(days=days)).isoformat()
-        with self._db_lock:
-            conn = self._get_conn()
+    def organize_and_compress(self, log_path: str):
+        """Organizes a single log file by function name, appends summaries, and compresses it."""
+        if not os.path.exists(log_path) or os.path.getsize(log_path) == 0:
+            return
+
+        with self._file_lock:
             try:
-                cur = conn.execute(
-                    "DELETE FROM records WHERE timestamp < ?", (cutoff,)
-                )
-                deleted = cur.rowcount
-                conn.commit()
-                return deleted
-            finally:
-                conn.close()
+                with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+                    raw_lines = f.readlines()
 
-    # ── Reorganizer (background thread) ───────────────────────────────────
+                # Group entries by function name while preserving entry records
+                grouped_records = defaultdict(list)
+                for line in raw_lines:
+                    line_str = line.strip()
+                    if not line_str or line_str.startswith("SUMMARY:"):
+                        continue
+                    
+                    parts = [p.strip() for p in line_str.split(",")]
+                    if len(parts) >= 5:
+                        func_name = parts[0]
+                        try:
+                            q_len = int(parts[1])
+                        except ValueError:
+                            q_len = 0
+                        
+                        dur_str = parts[4].rstrip("s")
+                        try:
+                            duration = float(dur_str)
+                        except ValueError:
+                            duration = 0.0
 
-    def _start_reorganizer(self):
-        """Spawn a daemon thread that reorganizes on startup then every hour."""
-        t = threading.Thread(target=self._reorganizer_loop, daemon=True)
-        t.start()
+                        grouped_records[func_name].append({
+                            "line": line_str,
+                            "query_length": q_len,
+                            "duration": duration
+                        })
+                    else:
+                        # Non-conforming lines kept under miscellaneous
+                        grouped_records["OTHER"].append({
+                            "line": line_str,
+                            "query_length": 0,
+                            "duration": 0.0
+                        })
 
-    def _reorganizer_loop(self):
-        """Background loop: reorganize + cleanup, then sleep 1 hour."""
+                if not grouped_records:
+                    return
+
+                # Write reorganized file with summary lines
+                with open(log_path, "w", encoding="utf-8") as f:
+                    for func_name in sorted(grouped_records.keys()):
+                        items = grouped_records[func_name]
+                        for item in items:
+                            f.write(item["line"] + "\n")
+                        
+                        # Calculate summaries
+                        total_items = len(items)
+                        avg_qlen = sum(it["query_length"] for it in items) / total_items if total_items > 0 else 0.0
+                        avg_dur = sum(it["duration"] for it in items) / total_items if total_items > 0 else 0.0
+                        
+                        # Summary line: SUMMARY: <function-name>, <average-query-length>, <average-time-taken-seconds>
+                        summary_line = f"SUMMARY: {func_name}, {avg_qlen:.2f}, {avg_dur:.5f}s\n"
+                        f.write(summary_line)
+                        f.write("\n")  # Section spacing
+
+                # Compress using ALFRED's native log compressor
+                compress_log(log_path, force=True)
+            except Exception as e:
+                pass
+
+    def organize_and_compress_all(self):
+        """Scans latency directory for all uncompressed .log files and compresses them."""
+        if not os.path.exists(LATENCY_DIR):
+            return
+        
         try:
-            # Initial run on startup
-            self.cleanup_old()
-            self.reorganize()
+            for item in os.listdir(LATENCY_DIR):
+                if item.endswith(".log"):
+                    full_path = os.path.join(LATENCY_DIR, item)
+                    if os.path.isfile(full_path):
+                        self.organize_and_compress(full_path)
         except Exception:
             pass
 
-        while True:
-            try:
-                time.sleep(3600)  # every hour
-                self.cleanup_old()
-                self.reorganize()
-            except Exception:
-                pass
+    # ── Cleanup ───────────────────────────────────────────────────────────
 
-    def reorganize(self):
-        """Aggregate records into summaries table, grouped by source."""
-        with self._db_lock:
-            conn = self._get_conn()
-            try:
-                rows = conn.execute("""
-                    SELECT source,
-                           COUNT(*)          AS call_count,
-                           AVG(time_taken_ms) AS avg_time,
-                           AVG(query_length)  AS avg_qlen,
-                           MIN(time_taken_ms) AS min_time,
-                           MAX(time_taken_ms) AS max_time
-                    FROM records
-                    WHERE source != 'SYSTEM.STARTUP'
-                    GROUP BY source
-                """).fetchall()
+    def cleanup_old(self, days: int = RETENTION_DAYS) -> int:
+        """Deletes latency files older than `days`. Returns count deleted."""
+        if not os.path.exists(LATENCY_DIR):
+            return 0
 
-                now = datetime.now().isoformat(timespec="seconds")
-                for row in rows:
-                    conn.execute(
-                        """INSERT OR REPLACE INTO summaries
-                           (source, call_count, avg_time_ms, avg_query_length,
-                            min_time_ms, max_time_ms, last_updated)
-                           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                        (row[0], row[1], row[2], row[3], row[4], row[5], now)
-                    )
-                conn.commit()
-            finally:
-                conn.close()
+        cutoff = time.time() - (days * 86400)
+        deleted = 0
 
-    # ── Query Methods ─────────────────────────────────────────────────────
+        with self._file_lock:
+            for item in os.listdir(LATENCY_DIR):
+                if item.endswith(".log") or item.endswith(".compressed_logs"):
+                    full_path = os.path.join(LATENCY_DIR, item)
+                    try:
+                        if os.path.getmtime(full_path) < cutoff:
+                            os.remove(full_path)
+                            deleted += 1
+                    except Exception:
+                        pass
+        return deleted
 
-    def get_summary(self, source: str = None) -> list[dict]:
-        """Return aggregated stats. If source given, filter by it."""
-        with self._db_lock:
-            conn = self._get_conn()
-            try:
-                if source:
-                    rows = conn.execute(
-                        "SELECT * FROM summaries WHERE source LIKE ?",
-                        (f"%{source}%",)
-                    ).fetchall()
-                else:
-                    rows = conn.execute(
-                        "SELECT * FROM summaries ORDER BY call_count DESC"
-                    ).fetchall()
+    # ── Reading & Querying ────────────────────────────────────────────────
 
-                return [
-                    {
-                        "source": r[0], "call_count": r[1],
-                        "avg_time_ms": round(r[2], 2),
-                        "avg_query_length": round(r[3], 1),
-                        "min_time_ms": round(r[4], 2),
-                        "max_time_ms": round(r[5], 2),
-                        "last_updated": r[6]
-                    }
-                    for r in rows
-                ]
-            finally:
-                conn.close()
+    def read_records(self, date_str: str) -> list[str]:
+        """Read and return all lines for a given date, decompressing if necessary without modifying disk."""
+        log_path = self._get_log_path(date_str)
+        comp_path = self._get_compressed_path(date_str)
 
-    def get_record_stats(self) -> dict:
-        """Return total record count, date range, and recent sessions."""
-        with self._db_lock:
-            conn = self._get_conn()
-            try:
-                total = conn.execute("SELECT COUNT(*) FROM records").fetchone()[0]
-                date_range = conn.execute(
-                    "SELECT MIN(timestamp), MAX(timestamp) FROM records"
-                ).fetchone()
+        # If uncompressed active log exists, read it
+        if os.path.exists(log_path):
+            with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+                return [line.rstrip("\r\n") for line in f if line.strip()]
 
-                # Recent 3 "sessions" = distinct dates based on startup records
-                sessions_raw = conn.execute("""
-                    SELECT DATE(timestamp) AS day, COUNT(*) AS cnt
-                    FROM records
-                    GROUP BY DATE(timestamp)
-                    ORDER BY day DESC
-                    LIMIT 3
-                """).fetchall()
+        # If compressed archive exists, decompress in memory
+        if os.path.exists(comp_path):
+            decompressed = read_compressed_log(comp_path)
+            if decompressed:
+                return [line.rstrip("\r\n") for line in decompressed.splitlines() if line.strip()]
 
-                sessions = [
-                    {"date": s[0], "record_count": s[1]}
-                    for s in sessions_raw
-                ]
+        return []
 
-                return {
-                    "total_records": total,
-                    "earliest": date_range[0] if date_range else None,
-                    "latest": date_range[1] if date_range else None,
-                    "recent_sessions": sessions
+    def get_available_dates(self) -> list[dict]:
+        """Returns metadata for all available recorded dates."""
+        if not os.path.exists(LATENCY_DIR):
+            return []
+
+        date_files = {}
+        for item in os.listdir(LATENCY_DIR):
+            if item.endswith(".log"):
+                d = item[:-4]
+                full = os.path.join(LATENCY_DIR, item)
+                date_files[d] = {
+                    "date": d,
+                    "status": "Active (Uncompressed)",
+                    "size_bytes": os.path.getsize(full),
+                    "path": full
                 }
-            finally:
-                conn.close()
+            elif item.endswith(".log.compressed_logs"):
+                d = item[:-20]
+                full = os.path.join(LATENCY_DIR, item)
+                if d not in date_files:
+                    date_files[d] = {
+                        "date": d,
+                        "status": "Archived (Compressed)",
+                        "size_bytes": os.path.getsize(full),
+                        "path": full
+                    }
+
+        return sorted(date_files.values(), key=lambda x: x["date"], reverse=True)
 
 
 # ─── Decorator ────────────────────────────────────────────────────────────────
@@ -299,7 +303,7 @@ def track_latency(source: str = None):
             finally:
                 q_end = time.time()
                 try:
-                    recorder = LatencyRecorder(auto_reorganize=False)
+                    recorder = LatencyRecorder()
                     recorder.record(
                         source=label,
                         query_length=q_len,
@@ -314,101 +318,151 @@ def track_latency(source: str = None):
 
 # ─── CLI ──────────────────────────────────────────────────────────────────────
 
-def _cli_list():
-    """--list: overview report."""
-    recorder = LatencyRecorder(auto_reorganize=False)
-    stats = recorder.get_record_stats()
+def _cli_show(date_str: str, lines_limit: int = 50, function_filter: str = None):
+    """--show <date> [--lines <N>] [--function-name <name>]"""
+    recorder = LatencyRecorder()
+    lines = recorder.read_records(date_str)
 
-    print("\n╔══════════════════════════════════════════╗")
-    print("║       ALFRED  LATENCY  REPORT            ║")
-    print("╠══════════════════════════════════════════╣")
-    print(f"║  Total Records : {stats['total_records']:<23} ║")
-    print(f"║  Date Range    : {(stats['earliest'] or 'N/A')[:10]} → {(stats['latest'] or 'N/A')[:10]}  ║")
-    print("╠══════════════════════════════════════════╣")
-    print("║  Recent Sessions (by date)               ║")
-    print("╟──────────────────────────────────────────╢")
-
-    if stats["recent_sessions"]:
-        for s in stats["recent_sessions"]:
-            print(f"║   {s['date']}  —  {s['record_count']:>5} records         ║")
-    else:
-        print("║   No sessions recorded yet.              ║")
-
-    print("╚══════════════════════════════════════════╝\n")
-
-
-def _cli_show(source: str):
-    """--show <source>: per-function summary."""
-    recorder = LatencyRecorder(auto_reorganize=False)
-    # Force fresh reorganize before showing
-    recorder.reorganize()
-    summaries = recorder.get_summary(source)
-
-    if not summaries:
-        print(f"\n  No summary data found for '{source}'.\n")
+    if not lines:
+        print(f"\n  [!] No latency logs found for date '{date_str}'.\n")
         return
 
-    print(f"\n{'Source':<40} {'Calls':>6} {'Average seconds':>15} {'Min seconds':>15} {'Max seconds':>15} {'Avg QLen':>9}")
-    print("─" * 105)
-    for s in summaries:
-        print(
-            f"{s['source']:<40} {s['call_count']:>6} "
-            f"{s['avg_time_ms']/1000:>15.5f} {s['min_time_ms']/1000:>15.5f} "
-            f"{s['max_time_ms']/1000:>15.5f} {s['avg_query_length']:>9.1f}"
-        )
-    print()
+    print(f"\n╔════════════════════════════════════════════════════════════════════════════════╗")
+    print(f"║  ALFRED LATENCY LOGS — DATE: {date_str:<48} ║")
+    print(f"╠════════════════════════════════════════════════════════════════════════════════╣")
+
+    if function_filter:
+        print(f"║  Filter: Function '{function_filter}' (showing all matching records)               ║")
+        print(f"╚════════════════════════════════════════════════════════════════════════════════╝\n")
+        
+        filter_lower = function_filter.lower()
+        matched = []
+        for line in lines:
+            if line.startswith("SUMMARY:"):
+                # SUMMARY: <function-name>, ...
+                parts = line[8:].split(",")
+                if parts and filter_lower in parts[0].strip().lower():
+                    matched.append(line)
+            else:
+                parts = line.split(",")
+                if parts and filter_lower in parts[0].strip().lower():
+                    matched.append(line)
+
+        if not matched:
+            print(f"  No records found for function matching '{function_filter}'.\n")
+            return
+
+        for m in matched:
+            if m.startswith("SUMMARY:"):
+                print(f"\033[92m{m}\033[0m")
+            else:
+                print(f"  {m}")
+        print(f"\n  Total records shown: {len(matched)}\n")
+
+    else:
+        limit_txt = f"First {lines_limit} lines" if lines_limit > 0 else "All lines"
+        print(f"║  Scope: {limit_txt:<68} ║")
+        print(f"╚════════════════════════════════════════════════════════════════════════════════╝\n")
+
+        displayed = lines[:lines_limit] if lines_limit > 0 else lines
+        for l in displayed:
+            if l.startswith("SUMMARY:"):
+                print(f"\033[92m{l}\033[0m")
+            else:
+                print(f"  {l}")
+
+        remaining = len(lines) - len(displayed)
+        if remaining > 0:
+            print(f"\n  ... ({remaining} more lines omitted. Use --lines {len(lines)} to show all)")
+        print(f"\n  Showing {len(displayed)} of {len(lines)} total lines.\n")
+
+
+def _cli_list():
+    """--list: show all recorded dates and storage stats."""
+    recorder = LatencyRecorder()
+    dates = recorder.get_available_dates()
+
+    print("\n╔═══════════════════════════════════════════════════════════════════════╗")
+    print("║                     ALFRED LATENCY LOG ARCHIVES                       ║")
+    print("╠═══════════════════════════════════════════════════════════════════════╣")
+    if not dates:
+        print("║   No latency logs recorded yet.                                       ║")
+        print("╚═══════════════════════════════════════════════════════════════════════╝\n")
+        return
+
+    print(f"║  {'Date':<14} {'Status':<25} {'Size (KB)':<12}           ║")
+    print("╟───────────────────────────────────────────────────────────────────────╢")
+    for d in dates:
+        size_kb = f"{d['size_bytes'] / 1024:.2f} KB"
+        print(f"║  {d['date']:<14} {d['status']:<25} {size_kb:<12}           ║")
+    print("╚═══════════════════════════════════════════════════════════════════════╝\n")
 
 
 def _cli_clean():
-    """--clean: force cleanup."""
-    recorder = LatencyRecorder(auto_reorganize=False)
-    deleted = recorder.cleanup_old()
-    print(f"\n  Cleaned up {deleted} records older than {RETENTION_DAYS} days.\n")
+    """--clean: force cleanup of old logs."""
+    recorder = LatencyRecorder()
+    deleted = recorder.cleanup_old(RETENTION_DAYS)
+    print(f"\n  Cleaned up {deleted} latency files older than {RETENTION_DAYS} days.\n")
 
 
 def _cli_help():
     print("""
-╔══════════════════════════════════════════════════════════════╗
-║               ALFRED  LATENCY  RECORDER  CLI                ║
-╠══════════════════════════════════════════════════════════════╣
-║                                                              ║
-║  Usage:                                                      ║
-║    python .\\FILES\\LATENCY_RECORDER.py [command]              ║
-║                                                              ║
-║  Commands:                                                   ║
-║    --list          Show total records, recent 3 sessions     ║
-║                    with per-date record counts.              ║
-║                                                              ║
-║    --show <source> Show per-function summary stats.          ║
-║                    <source> can be partial match.            ║
-║                    e.g. --show commands                      ║
-║                                                              ║
-║    --clean         Force cleanup of records older than       ║
-║                    15 days.                                   ║
-║                                                              ║
-║    (no arguments)  Show this help message.                   ║
-║                                                              ║
-║  Record Storage:                                             ║
-║    Database : logs/latency/latency.db                        ║
-║    Retention: 15 days (auto-cleaned by background thread)    ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════╗
+║                    ALFRED  LATENCY  RECORDER  CLI                        ║
+╠══════════════════════════════════════════════════════════════════════════╣
+║                                                                          ║
+║  Usage:                                                                  ║
+║    python .\\FILES\\LATENCY_RECORDER.py [options]                          ║
+║                                                                          ║
+║  Commands & Options:                                                     ║
+║    --show <date>           Decompress & display records for YYYY-MM-DD.  ║
+║                            (Defaults to first 50 lines if not specified) ║
+║                                                                          ║
+║    --lines <number>        Number of lines to show with --show (int).    ║
+║                            e.g. --show 2026-09-01 --lines 100            ║
+║                                                                          ║
+║    --function-name <name>  Show all logs and summary for specified       ║
+║                            function name irrespective of line limit.     ║
+║                            e.g. --show 2026-09-01 --function-name utils  ║
+║                                                                          ║
+║    --list                  List all available date log files & status.   ║
+║                                                                          ║
+║    --clean                 Delete records older than 15 days.            ║
+║                                                                          ║
+║    (no arguments)          Show this help message.                       ║
+║                                                                          ║
+║  Storage Architecture:                                                   ║
+║    Active Logs : logs/latency/YYYY-MM-DD.log                             ║
+║    Compressed  : logs/latency/YYYY-MM-DD.log.compressed_logs             ║
+║    Format      : <func>, <q_len>, <recv_time>, <out_time>, <dur>s        ║
+║    Summary     : SUMMARY: <func>, <avg_q_len>, <avg_duration>s           ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
 """)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--list", action="store_true")
-    parser.add_argument("--show", type=str, default=None)
-    parser.add_argument("--clean", action="store_true")
+    parser.add_argument("--show", type=str, default=None, help="Date to inspect (YYYY-MM-DD)")
+    parser.add_argument("--lines", type=int, default=50, help="Max lines to display")
+    parser.add_argument("--function-name", "--function", type=str, default=None, dest="function_name", help="Filter by function name")
+    parser.add_argument("--list", action="store_true", help="List all dates")
+    parser.add_argument("--clean", action="store_true", help="Clean old records")
+    parser.add_argument("--help", "-h", action="store_true", help="Show help")
 
     args, _ = parser.parse_known_args()
 
-    if args.list:
+    if args.help:
+        _cli_help()
+    elif args.list:
         _cli_list()
-    elif args.show:
-        _cli_show(args.show)
     elif args.clean:
         _cli_clean()
+    elif args.show:
+        _cli_show(args.show, lines_limit=args.lines, function_filter=args.function_name)
+    elif args.function_name:
+        # If --function-name provided without --show, default to today
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        _cli_show(today_str, lines_limit=args.lines, function_filter=args.function_name)
     else:
         _cli_help()

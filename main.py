@@ -82,7 +82,7 @@ def Command() -> str:
 def main():
     global COMMAND_INPUT
     
-    logger.info(f"Starting {version.PROJECT_NAME} version {version.PROJECT_VERSION}")
+    logger.info(f"Starting {version.PROJECT_NAME}")
     
     # Reset GUI layout and state on startup
     data_dir = os.path.join(os.path.dirname(__file__), "Data")
