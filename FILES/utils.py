@@ -21,10 +21,12 @@ Working:
 import os
 import datetime
 import random
+import re
 from llama_cpp import Llama
 from FILES.util_functions import multi_replace, MEMORY
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
+
 
 logger = get_logger(__name__)
 
@@ -96,7 +98,8 @@ def Responder(prompt: str) -> str:
     )
 
     logger.debug(f"Prompt injection content length: {len(inject)}")
-    out = LLM(inject, max_tokens=500, stop=["User:", "ALFRED:", "note:", "\nUser said:", "Alfred:"], echo=False)  
+    stop_tokens = ["User:", "ALFRED:", "note:", "Note:", "NOTE:", "\nnote:", "\nNote:", "\nNOTE:", "\nUser said:", "Alfred:"]
+    out = LLM(inject, max_tokens=500, stop=stop_tokens, echo=False)  
 
     answer = out["choices"][0]["text"]
     finish_reason = out["choices"][0].get("finish_reason", "")
@@ -107,11 +110,17 @@ def Responder(prompt: str) -> str:
         stripped_ans = answer.strip()
         if stripped_ans and stripped_ans[-1] not in ['.', '!', '?', '"', '\'']:
             elastic_inject = inject + answer
-            elastic_out = LLM(elastic_inject, max_tokens=75, stop=["User:", "ALFRED:", "note:", "\nUser said:"], echo=False)
+            elastic_out = LLM(elastic_inject, max_tokens=75, stop=stop_tokens, echo=False)
             answer += elastic_out["choices"][0]["text"]
 
     answer = answer.strip()
     
+    # Crop output text before any "NOTE:", "Note:", or "note:"
+    note_match = re.search(r'(?i)\bnote\s*:', answer)
+    if note_match:
+        logger.info(f"Found NOTE: keyword in LLM output at index {note_match.start()}. Cropping output text.")
+        answer = answer[:note_match.start()].strip()
+
     if "User said" in answer:
         try: 
             answer = answer.split("User said")[0]

@@ -5,6 +5,7 @@ FmWk/
 backend/
 Mem/
 model/
+research/
 
 .agents
 .env

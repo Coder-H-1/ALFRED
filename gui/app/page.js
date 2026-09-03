@@ -346,38 +346,59 @@ export default function Home() {
     
     // 5. Preview (ShowBox)
     if (config.showBox?.zone === zoneName && config.showBox?.visible) {
+      const hasVideo = config.showBox.data && config.showBox.data.some(
+        item => typeof item === 'string' && (item.startsWith('youtube:') || item.startsWith('video:'))
+      );
+
       windows.push(
         <ZoneWindow key="showBox" title="Preview" visible={true}>
           <div className="show-content">
-            <div className="image-stack" style={{ display: config.videoControls?.audioOnly ? 'none' : 'block', height: zoneName === 'focus' ? '60vh' : '300px' }}>
+            <div 
+              className={`image-stack ${hasVideo ? 'video-container-expanded' : ''}`} 
+              style={{ 
+                display: config.videoControls?.audioOnly ? 'none' : 'flex', 
+                height: hasVideo ? (zoneName === 'focus' ? '68vh' : '480px') : (zoneName === 'focus' ? '60vh' : '300px'),
+                width: '100%'
+              }}
+            >
                {config.showBox.data && config.showBox.data.map((item, idx) => {
                    if (typeof item === 'string' && item.startsWith('youtube:')) {
                        const videoId = item.replace('youtube:', '');
                        return (
-                           <iframe 
-                               key={idx}
-                               src={`https://www.youtube.com/embed/${videoId}?autoplay=1`} 
-                               title="YouTube video player" 
-                               frameBorder="0" 
-                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                               allowFullScreen
-                               className="stacked-image"
-                               style={{ transform: `rotate(${(idx - (config.showBox.data.length/2)) * 3}deg) scale(${1 - idx * 0.03})`, zIndex: config.showBox.data.length - idx }}
-                           ></iframe>
+                           <div key={idx} style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                             <iframe 
+                                 src={`https://www.youtube.com/embed/${videoId}?autoplay=1`} 
+                                 title="YouTube video player" 
+                                 frameBorder="0" 
+                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                 allowFullScreen
+                                 className="video-player-screen"
+                             ></iframe>
+                             <div style={{ marginTop: '6px', width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
+                               <a 
+                                 href={`https://www.youtube.com/watch?v=${videoId}`} 
+                                 target="_blank" 
+                                 rel="noopener noreferrer"
+                                 style={{ color: '#58a6ff', fontSize: '12px', textDecoration: 'none' }}
+                               >
+                                 Open in YouTube ↗
+                               </a>
+                             </div>
+                           </div>
                        );
                    }
                    if (typeof item === 'string' && item.startsWith('video:')) {
                        const videoUrl = item.replace('video:', '');
                        return (
-                           <video 
-                               ref={el => videoRefs.current[idx] = el}
-                               key={idx}
-                               src={videoUrl} 
-                               autoPlay 
-                               controls
-                               className="stacked-image"
-                               style={{ transform: `rotate(${(idx - (config.showBox.data.length/2)) * 3}deg) scale(${1 - idx * 0.03})`, zIndex: config.showBox.data.length - idx }}
-                           ></video>
+                           <div key={idx} style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center' }}>
+                             <video 
+                                 ref={el => videoRefs.current[idx] = el}
+                                 src={videoUrl} 
+                                 autoPlay 
+                                 controls
+                                 className="video-player-screen"
+                             ></video>
+                           </div>
                        );
                    }
                    return (

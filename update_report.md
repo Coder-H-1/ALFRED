@@ -1,6 +1,37 @@
-# Deep Research Report: TURBOQUANT & Project Integration
+# A.L.F.R.E.D System Updates & Research Report
 
-## 1. Executive Summary & Overview
+## Latest Updates (September 2026)
+
+### 1. Octopus Model Context Protocol (MCP) Intermediary Bridge
+- **Architecture**: Transformed legacy FmWk Octopus socket injection into an Anthropic Model Context Protocol (MCP) compatible execution engine.
+- **Intermediary Bridge (`FILES/plugin_host.py` & `FmWk/bridge.py`)**: Runs an isolated background `asyncio` event loop thread and exposes thread-safe, synchronous blocking methods to ALFRED's main command loop, avoiding asynchronous pollution in ALFRED's core codebase.
+- **Strategy B Dual-Mode Routing**:
+  1. Fast-Path Keyword / Regex Router (sub-1ms): Matches immediate tool intents (volume, brightness, battery, app launching, web search, media controls).
+  2. Local Quantized Qwen Classifier: Uses `llama_cpp` engine to parse tool arguments from speech into structured JSON with ~180MB footprint and sub-30ms latency.
+  3. Graceful Fallback: Seamlessly falls back to ALFRED's main LLM (`Responder`) if no tool matches or if a tool fails.
+- **Subprocess Pooling & Memory Management**:
+  - External GitHub stdio MCP servers (Node.js/Python) automatically receive `--max-old-space-size=64` memory caps.
+  - Automatic 60-second idle retirement terminates child processes and triggers `gc.collect()` to reclaim ~200MB allocated RAM.
+  - Serialization powered by high-speed C-based `orjson`.
+
+### 2. Smart Audio Ducking (`FILES/audio_ducker.py`)
+- Automatically monitors external audio sessions via Windows Core Audio APIs (`pycaw`).
+- Reduces non-ALFRED application volumes by 85% whenever Pocket TTS speech synthesis plays.
+- Instantly restores previous volumes upon speech completion or user voice interrupt.
+
+### 3. Resilient YouTube Player (`FILES/youtube_player.py`)
+- Configured `yt_dlp` with `ignoreerrors=True` and `no_warnings=True`.
+- Eliminates `DownloadError` crashes caused by deleted, private, or region-locked videos in multi-result search playlists (`ytsearch5:`).
+
+### 4. Voice Interrupt & Speech Continuation
+- Integrated mid-speech voice interrupts: saying 'alfred' halts speech immediately.
+- Speech continuation: commands like 'continue the previous command' recall last assistant response from Long-Term Memory (LTM).
+
+---
+
+## Deep Research Report: TURBOQUANT & Project Integration
+
+### 1. Executive Summary & Overview
 **TurboQuant** is an online vector quantization framework developed by **Google Research** (introduced in ICLR 2026: *"TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate"*). It provides near-optimal rate-distortion theoretical bounds for compressing high-dimensional vectors in real time without requiring training data, calibration sets, or model fine-tuning.
 
 In modern Large Language Model (LLM) serving architectures, the **Key-Value (KV) Cache** acts as the primary memory bottleneck. While model parameters remain static, the KV cache grows linearly with sequence length, batch size, and attention heads. TurboQuant drastically reduces KV cache memory footprints (by **3x to 6x**) while maintaining near-lossless generation quality.

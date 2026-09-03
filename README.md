@@ -22,11 +22,12 @@ The project runs entirely locally using GGUF-format models via `llama_cpp`, ensu
 4. **Persistent Memory System**: Combines short-term RAM caching of conversation context with a long-term SQLite database using FTS5 (Full-Text Search) and automatic tagging to recall, search, or forget past conversations.
 5. **System Automation**: Native desktop control interfaces to adjust volume (via `pycaw`), screen brightness, open/close applications (Notepad, Command Prompt, Chrome, WhatsApp, IDEs), toggle system settings, restart, or shutdown.
 6. **Next.js Web Interface**: Beautiful interactive GUI visualizer displaying logs, active query status, dynamic visual components, error popups, and media outputs.
-7. **Detachable Plugin Hot-Loading**: Connects with the Octopus compiler framework over local socket connections to dynamically hot-reload python modules at runtime.
+7. **Model Context Protocol (MCP) Intermediary Bridge**: Connects ALFRED to the Octopus MCP engine using a dedicated async daemon and synchronous facade, supporting Strategy B fast-path keyword routing, local Qwen tool classification, and standard stdio external tools.
 8. **Real-time Resource Monitoring**: Integrated CPU/RAM stats collector for system status feedback and voice status responses.
 9. **Thread-Safe Daily Latency Profiling**: Automatically tracks execution latency across all core functions with high-precision sub-second tracking, daily file segregation, exit grouping by function, and summary metrics.
 10. **Native Log Compression & Archiving**: Custom binary compression (`.compressed_logs` with magic header `ALF1`, CRC32 validation, and zlib level 9 compression) for rotated daily logs and latency traces.
 11. **Environment Hardening**: All backend routing connections are dynamically resolved through `.env` configurations.
+12. **Smart Audio Ducking**: Automatically detects external audio streams via `pycaw` and ducks volume by 85% during ALFRED speech playback, seamlessly restoring volume upon completion or voice interrupt.
 
 ---
 
@@ -38,18 +39,29 @@ The project layout organizes files systematically across frontend, plugins frame
 Project/
 ├── .env                  # Local environment configurations (ignored by git)
 ├── .gitignore            # Git exclusion guidelines
-├── alfred_voice.py       # Multi-threaded Pocket-TTS synthesis module
+├── alfred_voice.py       # Multi-threaded Pocket-TTS synthesis module with voice interrupt
 ├── launcher.pyw          # Background service hotkey and health check poller
 ├── LICENSE               # MIT License
 ├── main.py               # Main application entry point
 ├── README.md             # Project documentation
 ├── requirements.txt      # Python dependencies manifest
+├── update_report.md      # Detailed research and architecture update report
 ├── version.py            # Project constants and network metadata
 ├── Data/                 # GUI settings, config, and layout states
 │   ├── config.json       # Interactive layout widgets configuration
 │   ├── layout_state.json # Pinned and layout zones memory
 │   └── command.txt       # GUI typed command bridge
 ├── FILES/                # Core Python modules
+│   ├── audio_ducker.py   # Smart volume ducking for background audio during speech
+│   ├── command_components/ # Modular system command subroutines
+│   │   ├── app_launcher.py      # App launch and process lifecycle
+│   │   ├── log_commands.py      # Log viewer and compression triggers
+│   │   ├── media_controls.py    # Media and YouTube playback handlers
+│   │   ├── memory_commands.py   # LTM recall, search, and forget commands
+│   │   ├── search.py            # Google and web queries
+│   │   ├── system_status.py     # Battery, CPU, RAM metrics
+│   │   ├── weather_commands.py  # Weather updates
+│   │   └── window_management.py # Window minimize, maximize, and focus
 │   ├── commands.py       # Core mapped system command routines
 │   ├── gui_controller.py # Configuration and GUI interaction module
 │   ├── intent.py         # Experimental intent classifier / BERT trainer
@@ -59,14 +71,17 @@ Project/
 │   ├── long_term_memory.py # Standalone SQLite conversation memory database
 │   ├── memory.py         # RAM cache / LTM integration layer
 │   ├── model_manager.py  # Loader / unloader for local GGUF models
-│   ├── plugin_host.py    # Hot-reload plugin compiler socket interface
+│   ├── plugin_host.py    # Octopus Model Context Protocol (MCP) Bridge adapter
 │   ├── resource_monitor.py # System CPU/RAM tracking module
 │   ├── system_control.py # Pycaw volume / Screen-brightness control routines
+│   ├── turbo_quant.py    # TurboQuant vector quantization engine
 │   ├── util_functions.py # Multi-replace, search tools, microphone listener
 │   ├── utils.py          # LLaMA responder loop interface
+│   ├── web_search_extractor.py # Web search extractor
 │   ├── window_manager.py # pygetwindow layout helper static class
-│   └── youtube_player.py # yt-dlp search stream URL extraction
-├── FmWk/                 # Detachable Octopus Plugin compile framework
+│   └── youtube_player.py # yt-dlp resilient search and stream extraction
+├── FmWk/                 # Octopus Model Context Protocol (MCP) framework (external repo)
+├── research/             # MCP deep research and tool development guides
 ├── gui/                  # Next.js web GUI interface
 │   ├── app/              # Main layout, styles, page and api endpoints
 │   │   ├── api/          # Internal JSON routes (config, command, logs)

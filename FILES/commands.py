@@ -84,7 +84,7 @@ def process_command(command: str) -> str:
         return handle_compress_logs(command)
 
     # 4. Weather
-    elif "check weather outside" in command:
+    elif "check weather outside" in command or "check whether outside" in command:
         return handle_weather(command)
             
     # 5. Memory & Recall

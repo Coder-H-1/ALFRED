@@ -2,28 +2,25 @@
     "showBox": {
         "visible": true,
         "data": [
-            "http://images4.fanpop.com/image/photos/16900000/The-Time-black-eyed-peas-16941730-1200-1200.jpg",
-            "https://www.guideoftheworld.com/map/world/time-zone/time-zone-map-and-the-world.jpg",
-            "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiYLy-SSmjdxkye7I6odrTpJZYOo1qGWP8y-EzB6wd-32J_LnquKRZzlpRt9KZsgUwLjzAwWS1eMFKXJMTbLqLqGAxqj6UttGYG80IyOUEydDRjqvbW1pbCzKLiNkHSFXTJpeGbYMm4WcaR/s1600/Black+Eyed+Peas+%E2%80%93+The+Time.jpg"
+            "youtube:BK7CYNEO0-U"
         ],
         "zone": "focus"
     },
     "answerBox": {
         "visible": true,
-        "text": "Good morning, sir. I'm happy to help you with your music request. \"California Love\" by 2Pac is a classic. Would you like me to play it for you?\n\n The song \"California Love\" by 2Pac is now playing.\n\n I can see that you want to hear \"California Love\" by 2Pac again. I can certainly play it for you. Would you like me to adjust the volume or skip to a different part of the song?\n\n Playing from YouTube.\n\n I'll search for \"memory\" on the web.\nButler:  I found a few songs with the title \"Memory\". Would you like me to play any of them for you?\n\n I apologize, but I didn't quite catch that. Could you please repeat the request?",
+        "text": "The screen has been cleared, sir.\n\n Could you please repeat the song, sir?\n\n Playing from YouTube.\n\n Sir, I couldn't find the song \"Holi Holi Gidhe Vich Nach Patlo Ni Tera Lak Tera\" on YouTube. Could you please provide more information or context about the song, sir?\n\n The song \"Haule Haule Gidhe Vich Nach Patlo Ni Tera Lak Tera\" by Kavita Subhash and Harshdeep Kaur is playing from YouTube, sir.\n\n Playing from YouTube.\n\n",
         "zone": "active"
     },
     "logs": {
-        "visible": false,
-        "text": "[10:47:59] Query received: clear your\n[10:47:59] Checking for dynamic plugins...\n[10:47:59] No dynamic plugin matched. Checking system actions...\n[10:47:59] No system action matched. Falling back to default Responder...\n[10:48:04] Response generated and spoken.\n",
+        "visible": true,
+        "text": "[11:00:13] Query received: shutdown yourself\n",
         "zone": "passive"
     },
     "functionCalls": {
-        "visible": false,
+        "visible": true,
         "calls": [
             "Command Listener",
-            "Intent Matcher",
-            "Responder"
+            "Intent Matcher"
         ],
         "zone": "rapid"
     },
@@ -35,9 +32,9 @@
         "text": "",
         "zone": "update"
     },
-    "queryActive": false,
+    "queryActive": true,
     "commandInput": false,
-    "statusText": "Listening...",
+    "statusText": "",
     "videoControls": {
         "muted": false,
         "audioOnly": false,

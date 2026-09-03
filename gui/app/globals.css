@@ -266,6 +266,32 @@ h3 {
   z-index: 100 !important;
 }
 
+.video-player-screen {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  border: 1px solid var(--panel-border);
+  object-fit: contain;
+}
+
+.video-player-screen:hover {
+  transform: none !important;
+}
+
+.video-container-expanded {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+
 /* Core Orb Styling */
 .alfred-core {
   width: 120px;

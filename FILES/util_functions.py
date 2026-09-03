@@ -49,6 +49,15 @@ def speak(text: str = None) -> None:
     logger.info(f"Speaking: '{text}'")
     ALFRED_VOICE.speak(text)
 
+def stop_speaking() -> None:
+    """Stops current audio playback and flushes TTS queue."""
+    ALFRED_VOICE.stop_speaking()
+
+def is_speaking() -> bool:
+    """Checks if voice is actively playing or generating."""
+    return ALFRED_VOICE.is_speaking
+
+
 @track_latency("util_functions.listen_command")
 def listen_command() -> str:
     """Listens to the user speech using speech_recognition."""

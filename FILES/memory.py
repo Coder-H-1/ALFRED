@@ -145,5 +145,28 @@ class Memory:
             logger.error(f"Failed to search LTM in-chats: {e}", exc_info=True)
         return None
 
+    @track_latency("Memory.get_last_assistant_response")
+    def get_last_assistant_response(self) -> str:
+        """
+        Retrieves the most recent ALFRED response from Long Term Memory (SQLite),
+        falling back to short term cache.
+        """
+        try:
+            cur = self._ltm._conn.cursor()
+            row = cur.execute(
+                "SELECT content FROM memories WHERE role = 'alfred' ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+            if row and row["content"]:
+                return row["content"]
+        except Exception as e:
+            logger.error(f"Failed to fetch last assistant response from LTM SQLite: {e}", exc_info=True)
+
+        if self.store["conversation_history"]:
+            for _, reply in reversed(self.store["conversation_history"]):
+                if reply:
+                    return reply
+        return ""
+
+
 
 MEMORY = Memory()  # Creates Global Memory Object

@@ -12,8 +12,13 @@ from pocket_tts import TTSModel
 import re
 from concurrent.futures import ThreadPoolExecutor
 from FILES.LATENCY_RECORDER import track_latency
+try:
+    from FILES.audio_ducker import AudioDucker
+except ImportError:
+    from audio_ducker import AudioDucker
 
 logger = logging.getLogger(__name__)
+
 
 @track_latency("alfred_voice.chunk_text")
 def chunk_text(text: str, max_words: int = 25) -> list[str]:
@@ -81,6 +86,11 @@ class AlfredVoiceModule:
         self.playback_queue = queue.Queue(maxsize=8)
         self.is_initialized = False
         self._shutdown_flag = threading.Event()
+        self._interrupt_event = threading.Event()
+        self._currently_playing = False
+        self.ducker = AudioDucker(duck_percent=0.85)
+        self._remaining_chunks = 0
+        self._chunks_lock = threading.Lock()
         
         # Executor for simultaneous chunk generation
         self.executor = ThreadPoolExecutor(max_workers=4)
@@ -95,6 +105,54 @@ class AlfredVoiceModule:
             
             self._playback_thread = threading.Thread(target=self._process_playback_queue, daemon=True, name="AlfredPlaybackWorker")
             self._playback_thread.start()
+
+    @property
+    def is_speaking(self) -> bool:
+        """Returns True if audio is actively playing or speech chunks are in queue."""
+        if getattr(self, "_currently_playing", False):
+            return True
+        if hasattr(self, "generation_queue") and not self.generation_queue.empty():
+            return True
+        if hasattr(self, "playback_queue") and not self.playback_queue.empty():
+            return True
+        return False
+
+    def stop_speaking(self) -> None:
+        """
+        Immediately halts sounddevice audio playback, purges both generation and
+        playback queues, restores any ducked audio, and triggers Python garbage collection.
+        """
+        import gc
+        logger.info("Interrupt received: stopping speech and clearing queues.")
+        self._interrupt_event.set()
+        try:
+            sd.stop()
+        except Exception as e:
+            logger.warning(f"Error stopping sounddevice: {e}")
+
+        # Flush generation queue
+        while not self.generation_queue.empty():
+            try:
+                self.generation_queue.get_nowait()
+                self.generation_queue.task_done()
+            except Exception:
+                break
+
+        # Flush playback queue and cancel pending futures
+        while not self.playback_queue.empty():
+            try:
+                fut = self.playback_queue.get_nowait()
+                fut.cancel()
+                self.playback_queue.task_done()
+            except Exception:
+                break
+
+        self._currently_playing = False
+        with self._chunks_lock:
+            self._remaining_chunks = 0
+        self.ducker.restore()
+        gc.collect()
+        self._interrupt_event.clear()
 
     def _initialize(self):
         """Pre-loads the 100M parameter model and voice state into memory."""
@@ -125,12 +183,18 @@ class AlfredVoiceModule:
             return
 
         chunks = chunk_text(text, max_words=25) # Reduced to 25 to guarantee staying under 50 tokens
-        logger.debug(f"Split text into {len(chunks)} chunks. Queuing for generation.")
+        valid_chunks = [c for c in chunks if c.strip()]
+        if not valid_chunks:
+            return
+
+        with self._chunks_lock:
+            self._remaining_chunks += len(valid_chunks)
+
+        logger.debug(f"Split text into {len(valid_chunks)} chunks. Queuing for generation.")
         
         # Queue chunks to be managed by the generation thread
-        for chunk in chunks:
-            if chunk.strip():
-                self.generation_queue.put(chunk)
+        for chunk in valid_chunks:
+            self.generation_queue.put(chunk)
 
     def _process_generation_queue(self):
         """Worker loop that limits simultaneous generation to maxsize of playback_queue."""
@@ -141,6 +205,8 @@ class AlfredVoiceModule:
                 continue
 
             try:
+                if self._interrupt_event.is_set():
+                    continue
                 # Submit chunk to thread pool
                 future = self.executor.submit(self._generate_audio_tensor, chunk)
                 
@@ -156,6 +222,8 @@ class AlfredVoiceModule:
     @track_latency("AlfredVoiceModule._generate_audio_tensor")
     def _generate_audio_tensor(self, text: str):
         """Worker function that generates audio latents for a single chunk."""
+        if self._interrupt_event.is_set():
+            return None
         try:
             # Ensure text ends with punctuation so TTS doesn't drop the last word
             if text and not text[-1] in ".!?,;":
@@ -186,29 +254,51 @@ class AlfredVoiceModule:
                 continue
 
             try:
+                if self._interrupt_event.is_set():
+                    continue
+
                 # This will block until the specific chunk finishes its simultaneous generation
                 audio_array = future.result() 
                 
-                if audio_array is not None:
-                    # Pad with 100ms silence at the start and 150ms at the end to prevent cutoffs
-                    start_pad = np.zeros((int(self.sample_rate * 0.1), 1), dtype=audio_array.dtype)
-                    end_pad = np.zeros((int(self.sample_rate * 0.15), 1), dtype=audio_array.dtype)
-                    padded_audio = np.vstack((start_pad, audio_array, end_pad))
-                    
-                    logger.debug("Playing generated chunk via sounddevice...")
-                    sd.play(padded_audio, samplerate=self.sample_rate)
-                    sd.wait() 
+                if self._interrupt_event.is_set() or audio_array is None:
+                    with self._chunks_lock:
+                        if self._remaining_chunks > 0:
+                            self._remaining_chunks -= 1
+                        if self._remaining_chunks == 0:
+                            self.ducker.restore()
+                    continue
+
+                # Pad with 100ms silence at the start and 150ms at the end to prevent cutoffs
+                start_pad = np.zeros((int(self.sample_rate * 0.1), 1), dtype=audio_array.dtype)
+                end_pad = np.zeros((int(self.sample_rate * 0.15), 1), dtype=audio_array.dtype)
+                padded_audio = np.vstack((start_pad, audio_array, end_pad))
+                
+                # Smart Speech: reduce other audio by 85% during speech
+                if not self.ducker.is_ducked:
+                    self.ducker.duck()
+
+                logger.debug("Playing generated chunk via sounddevice...")
+                self._currently_playing = True
+                sd.play(padded_audio, samplerate=self.sample_rate)
+                sd.wait() 
             except sd.PortAudioError as e:
                  logger.error(f"Sounddevice/PortAudio Error (Is an audio device available?): {e}")
             except Exception as e:
                  logger.error(f"Error during audio playback: {e}")
             finally:
+                self._currently_playing = False
+                with self._chunks_lock:
+                    if self._remaining_chunks > 0:
+                        self._remaining_chunks -= 1
+                    if self._remaining_chunks == 0:
+                        self.ducker.restore()
                 self.playback_queue.task_done()
 
     def shutdown(self):
         """Gracefully shuts down the voice module worker thread."""
         logger.info("Shutting down AlfredVoiceModule...")
         self._shutdown_flag.set()
+        self.ducker.restore()
         if hasattr(self, 'executor'):
             self.executor.shutdown(wait=False)
         if hasattr(self, '_generation_thread') and self._generation_thread.is_alive():

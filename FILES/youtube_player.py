@@ -14,7 +14,7 @@ VOLUME_YOUTUBE = 100
 
 @track_latency("youtube_player.play_youtube_audio")
 def play_youtube_audio(query: str) -> str:
-    """Fetches video URL from YouTube using yt_dlp and sends it to the GUI."""
+    """Fetches video URL from YouTube using yt_dlp with automatic fallback for embed-disabled videos."""
     speak("Let me fetch that, sir.")
 
     import yt_dlp
@@ -23,30 +23,50 @@ def play_youtube_audio(query: str) -> str:
     logger.info(f"Searching YouTube for: '{query}'")
     try:
         ydl_opts = {
-            'format': 'best',
+            'format': 'best[ext=mp4]/best',
             'noplaylist': True,
             'quiet': True,
-            'default_search': 'ytsearch1'
+            'ignoreerrors': True,
+            'no_warnings': True,
+            'default_search': 'ytsearch5'
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(f"ytsearch1:{query}", download=False)
-            if 'entries' in info and len(info['entries']) > 0:
-                entry = info['entries'][0]
-                video_id = entry.get('id')
-                if video_id:
-                    logger.info(f"Found YouTube video ID: {video_id}")
-                    show_data([f"youtube:{video_id}"])
-                else:
-                    video_url = entry['url']
-                    logger.warning(f"No YouTube video ID found, falling back to URL: {video_url}")
-                    show_data([f"video:{video_url}"])
-                return "[KEEP_UI] Playing from YouTube."
-            else:
+            info = ydl.extract_info(f"ytsearch5:{query}", download=False)
+            entries = [e for e in info.get('entries', []) if e]
+            if not entries:
                 logger.warning(f"No YouTube entries found for query: '{query}'")
                 return "I'm sorry, I couldn't find a video for that."
+
+            embeddable_entry = None
+            first_entry_direct_url = None
+
+            for idx, entry in enumerate(entries):
+                v_id = entry.get('id')
+                can_embed = entry.get('playable_in_embed') is not False
+                if can_embed and v_id:
+                    embeddable_entry = entry
+                    break
+                elif idx == 0 and entry.get('url'):
+                    first_entry_direct_url = entry.get('url')
+
+            if embeddable_entry:
+                v_id = embeddable_entry.get('id')
+                logger.info(f"Selected embeddable YouTube video ID: {v_id} ('{embeddable_entry.get('title')}')")
+                show_data([f"youtube:{v_id}"])
+                return "[KEEP_UI] Playing from YouTube."
+            elif first_entry_direct_url:
+                logger.info("No embeddable entry found; falling back to direct video stream.")
+                show_data([f"video:{first_entry_direct_url}"])
+                return "[KEEP_UI] Playing video via direct stream."
+            elif entries[0].get('id'):
+                show_data([f"youtube:{entries[0]['id']}"])
+                return "[KEEP_UI] Playing from YouTube."
+            else:
+                return "I'm sorry, I couldn't find a playable stream for that video."
     except Exception as e:
         logger.error(f"YouTube yt_dlp search error: {e}", exc_info=True)
         return "I'm sorry, finding the video failed due to YouTube restrictions or an error."
+
 
 @track_latency("youtube_player.stop_youtube_audio")
 def stop_youtube_audio() -> str:

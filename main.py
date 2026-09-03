@@ -1,6 +1,6 @@
 from FILES.utils import Responder, get_greeting, MEMORY
 from FILES.commands import process_command
-from FILES.util_functions import listen_command, speak
+from FILES.util_functions import listen_command, speak, stop_speaking, is_speaking
 from FILES.plugin_host import start_plugin_listener, match_dynamic_command
 from FILES.gui_controller import (
     init_config, set_query_active, show_answer, show_logs, 
@@ -17,8 +17,10 @@ import atexit
 import time
 import webbrowser
 import re
+import gc
 from dotenv import load_dotenv
 import version
+
 
 # Load .env file at startup
 load_dotenv()
@@ -122,17 +124,79 @@ def main():
     speak(get_greeting())
     start_plugin_listener()
 
+    interrupted_speech = False
+
     while True:
         try:
             q_start = time.time()
+            was_speaking = is_speaking()
             command = Command()
             if command is None: 
                 continue
-            
+
+            command = command.strip()
+            if not command:
+                continue
+
+            # In-between voice interrupt check
+            voice_active = was_speaking or is_speaking()
+            has_alfred = bool(re.match(r"^alfred\b", command, re.IGNORECASE))
+
+            if voice_active:
+                if not has_alfred:
+                    logger.debug("Speech active and command does not start with 'alfred'. Ignoring audio.")
+                    continue
+                else:
+                    logger.info("Interrupt keyword 'alfred' detected while speaking. Stopping speech immediately.")
+                    stop_speaking()
+                    interrupted_speech = True
+
+            # Strip leading 'alfred' prefix for uniform command matching
+            if has_alfred:
+                command = re.sub(r"^alfred\s*[,:]?\s*", "", command, flags=re.IGNORECASE).strip()
+
+            if not command:
+                continue
+
             set_query_active(True)
             show_logs(f"Query received: {command}")
             add_function_call("Command Listener")
             add_function_call("Intent Matcher")
+
+            # Check if user says continue previous command or interrupted speech
+            continue_keywords = (
+                "continue the previous command",
+                "continue the speech for previous command interrupted",
+                "continue the speech for the previous command interrupted",
+                "continue the previous speech",
+                "continue previous command",
+                "continue the speech",
+                "continue speech",
+                "continue interrupted command",
+                "continue interrupted speech",
+                "continue",
+            )
+            if any(command == kw or command.startswith(kw) for kw in continue_keywords):
+                show_logs("Continue command received. Recalling previous speech from Long Term Memory...")
+                add_function_call("LTM Recall")
+                prev_speech = MEMORY.get_last_assistant_response()
+                if prev_speech:
+                    clean_prev_speech = filter_speech(prev_speech)
+                    show_answer(clean_prev_speech)
+                    speak(clean_prev_speech)
+                    show_logs("Resynthesised and speaking previous speech from LTM.")
+                    hide_transient_boxes()
+                else:
+                    speak("I have no previous speech in memory to continue, sir.")
+                interrupted_speech = False
+                continue
+
+            # If user does not say continue:
+            # Stop synthesizing previous text and clean memory using garbage collector
+            if interrupted_speech:
+                stop_speaking()
+                gc.collect()
+                interrupted_speech = False
 
             if "switch command" in command:
                 COMMAND_INPUT = not COMMAND_INPUT
