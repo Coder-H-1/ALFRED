@@ -5,23 +5,31 @@
 ### 1. Octopus Model Context Protocol (MCP) Intermediary Bridge
 - **Architecture**: Transformed legacy FmWk Octopus socket injection into an Anthropic Model Context Protocol (MCP) compatible execution engine.
 - **Intermediary Bridge (`FILES/plugin_host.py` & `FmWk/bridge.py`)**: Runs an isolated background `asyncio` event loop thread and exposes thread-safe, synchronous blocking methods to ALFRED's main command loop, avoiding asynchronous pollution in ALFRED's core codebase.
-- **Strategy B Dual-Mode Routing**:
+- **Fast-Path Dual-Mode Routing**:
   1. Fast-Path Keyword / Regex Router (sub-1ms): Matches immediate tool intents (volume, brightness, battery, app launching, web search, media controls).
   2. Local Quantized Qwen Classifier: Uses `llama_cpp` engine to parse tool arguments from speech into structured JSON with ~180MB footprint and sub-30ms latency.
   3. Graceful Fallback: Seamlessly falls back to ALFRED's main LLM (`Responder`) if no tool matches or if a tool fails.
+- **`[KEEP_UI]` Directive & UI State Preservation**:
+  - Integrated `[KEEP_UI]` directive handling into `FILES/plugin_host.py` and `main.py`.
+  - Enables dynamic plugins and MCP tools to preserve transient visualizer UI boxes open across multi-turn interactions without premature auto-closing.
+- **Enhanced MCP Content Parsing**:
+  - Upgraded tool output formatting in `FILES/plugin_host.py` to parse structured `content` blocks containing text objects returned from standard MCP tools.
 - **Subprocess Pooling & Memory Management**:
   - External GitHub stdio MCP servers (Node.js/Python) automatically receive `--max-old-space-size=64` memory caps.
   - Automatic 60-second idle retirement terminates child processes and triggers `gc.collect()` to reclaim ~200MB allocated RAM.
   - Serialization powered by high-speed C-based `orjson`.
 
-### 2. Smart Audio Ducking (`FILES/audio_ducker.py`)
+### 2. Modular Architecture Cleanup & MCP Offloading
+- **Decoupled & Removed Redundant Standalone Modules**:
+  - Deleted legacy utility files: `FILES/intent.py`, `FILES/model_manager.py`, `FILES/resource_monitor.py`, `FILES/system_control.py`, `FILES/web_search_extractor.py`, `FILES/window_manager.py`, `FILES/youtube_player.py`, and `FILES/command_components/search.py`.
+  - Offloaded system hardware monitoring, search extraction, media volume, and brightness adjustments directly to Octopus MCP / FmWk execution pathways.
+- **Streamlined Command Dispatching**:
+  - Cleaned legacy handlers from `FILES/commands.py` and `FILES/command_components/` (`media_controls.py`, `system_status.py`), eliminating duplicate code and routing all external tool actions cleanly through the MCP bridge.
+
+### 3. Smart Audio Ducking (`FILES/audio_ducker.py`)
 - Automatically monitors external audio sessions via Windows Core Audio APIs (`pycaw`).
 - Reduces non-ALFRED application volumes by 85% whenever Pocket TTS speech synthesis plays.
 - Instantly restores previous volumes upon speech completion or user voice interrupt.
-
-### 3. Resilient YouTube Player (`FILES/youtube_player.py`)
-- Configured `yt_dlp` with `ignoreerrors=True` and `no_warnings=True`.
-- Eliminates `DownloadError` crashes caused by deleted, private, or region-locked videos in multi-result search playlists (`ytsearch5:`).
 
 ### 4. Voice Interrupt & Speech Continuation
 - Integrated mid-speech voice interrupts: saying 'alfred' halts speech immediately.
@@ -110,7 +118,7 @@ To eliminate the inner product bias $\mathbb{E}[\langle \hat{\mathbf{u}}, \mathb
 ## 4. Impact on A.L.F.R.E.D Project
 
 ### 4.1 Current Architecture Analysis
-ALFRED currently executes GGUF models on CPU via `llama_cpp.Llama` inside [FILES/model_manager.py](file:///c:/Users/VIBHA/Desktop/AI/FILES/model_manager.py):
+ALFRED executes GGUF models on CPU via `llama_cpp.Llama` inside [FILES/utils.py](file:///c:/Users/VIBHA/Desktop/AI/FILES/utils.py):
 * Models: `qwen-linux-q8_0.gguf`, `quotes_q8_0.gguf`, `linux_tools_q8_0.gguf`.
 * Execution: 8 CPU threads (`n_threads=8`), `n_batch=256`.
 * Memory: Conversation memory stores multi-turn context in RAM and SQLite (`FILES/long_term_memory.py`).
