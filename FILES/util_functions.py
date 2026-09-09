@@ -140,9 +140,3 @@ def search_files(filename: str, search_path="C:\\", is_commanded:bool=False, to_
     else:
         logger.info(f"No matching files found for query: '{query}'")
         return "I'm afraid I found no matching files, sir."
-
-# Memory Container Import
-try:
-    from FILES.memory import MEMORY
-except ImportError:
-    from memory import MEMORY

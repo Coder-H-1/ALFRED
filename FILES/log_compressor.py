@@ -16,7 +16,7 @@ COMMON_TOKENS = [
     "[INFO]", "[DEBUG]", "[WARNING]", "[ERROR]", "[CRITICAL]",
     "[alfred_voice]", "[root]", "[FILES.memory]", "[FILES.utils]",
     "[FILES.util_functions]", "[FILES.commands]", "[FILES.gui_controller]",
-    "[FILES.plugin_host]", "[FILES.resource_monitor]", "[__main__]",
+    "[FILES.plugin_host]", "[FmWk.bridge]", "[__main__]",
     "Initializing", "successfully", "Starting", "Failed to", "Received GUI command"
 ]
 

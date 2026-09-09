@@ -1,27 +1,22 @@
 {
     "showBox": {
-        "visible": true,
-        "data": [
-            "youtube:BK7CYNEO0-U"
-        ],
+        "visible": false,
+        "data": [],
         "zone": "focus"
     },
     "answerBox": {
         "visible": true,
-        "text": "The screen has been cleared, sir.\n\n Could you please repeat the song, sir?\n\n Playing from YouTube.\n\n Sir, I couldn't find the song \"Holi Holi Gidhe Vich Nach Patlo Ni Tera Lak Tera\" on YouTube. Could you please provide more information or context about the song, sir?\n\n The song \"Haule Haule Gidhe Vich Nach Patlo Ni Tera Lak Tera\" by Kavita Subhash and Harshdeep Kaur is playing from YouTube, sir.\n\n Playing from YouTube.\n\n",
-        "zone": "active"
+        "text": "",
+        "zone": "focus"
     },
     "logs": {
-        "visible": true,
-        "text": "[11:00:13] Query received: shutdown yourself\n",
+        "visible": false,
+        "text": "",
         "zone": "passive"
     },
     "functionCalls": {
-        "visible": true,
-        "calls": [
-            "Command Listener",
-            "Intent Matcher"
-        ],
+        "visible": false,
+        "calls": [],
         "zone": "rapid"
     },
     "visualizer": {
@@ -32,9 +27,9 @@
         "text": "",
         "zone": "update"
     },
-    "queryActive": true,
+    "queryActive": false,
     "commandInput": false,
-    "statusText": "",
+    "statusText": "Listening...",
     "videoControls": {
         "muted": false,
         "audioOnly": false,

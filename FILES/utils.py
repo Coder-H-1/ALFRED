@@ -23,7 +23,8 @@ import datetime
 import random
 import re
 from llama_cpp import Llama
-from FILES.util_functions import multi_replace, MEMORY
+from FILES.memory import MEMORY
+from FILES.util_functions import multi_replace
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
 

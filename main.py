@@ -220,12 +220,20 @@ def main():
             if plugin_result:
                 show_logs("Dynamic plugin matched successfully.")
                 add_function_call("match_dynamic_command")
+
+                keep_ui = False
+                if "[KEEP_UI]" in str(plugin_result):
+                    keep_ui = True
+                    plugin_result = str(plugin_result).replace("[KEEP_UI]", "").strip()
+
                 clean_plugin_result = filter_speech(plugin_result)
                 show_answer(clean_plugin_result)
                 speak(clean_plugin_result)
                 MEMORY.add_to_history(command, plugin_result)
                 show_logs("Added interaction to memory.")
-                hide_transient_boxes()
+
+                if not keep_ui:
+                    hide_transient_boxes()
                 continue
 
             show_logs("No dynamic plugin matched. Checking system actions...")

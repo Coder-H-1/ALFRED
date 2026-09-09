@@ -19,22 +19,28 @@ def _format_tool_output(result: Any) -> str:
         return result
 
     if isinstance(result, dict):
+        prefix = "[KEEP_UI] " if result.get("keep_ui") else ""
         if "status" in result:
-            return str(result["status"])
+            return f"{prefix}{result['status']}"
         if "answer" in result:
-            return str(result["answer"])
+            return f"{prefix}{result['answer']}"
         if "results" in result:
             res_list = result["results"]
             if isinstance(res_list, list) and res_list:
-                return str(res_list[0])
-            return str(res_list)
+                return f"{prefix}{str(res_list[0])}"
+            return f"{prefix}{str(res_list)}"
+        if "content" in result:
+            items = result["content"]
+            if isinstance(items, list) and items and isinstance(items[0], dict) and "text" in items[0]:
+                return f"{prefix}{items[0]['text']}"
+            return f"{prefix}{str(items)}"
         if "message" in result:
-            return str(result["message"])
+            return f"{prefix}{result['message']}"
         if "error" in result:
             return f"Notice: {result['error']}"
         # Fallback dictionary display
         parts = [f"{k}: {v}" for k, v in result.items() if not k.startswith("_")]
-        return ", ".join(parts) if parts else "Tool execution completed."
+        return f"{prefix}{', '.join(parts)}" if parts else "Tool execution completed."
 
     return str(result)
 
