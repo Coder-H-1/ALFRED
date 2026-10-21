@@ -22,14 +22,14 @@ import os
 import datetime
 import random
 import re
-from llama_cpp import Llama
+lazy import llama_cpp
 from FILES.memory import MEMORY
 from FILES.util_functions import multi_replace
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
 
-
 logger = get_logger(__name__)
+
 
 @track_latency("utils.get_time")
 def get_time() -> str:
@@ -66,24 +66,29 @@ def clear_Memory() -> None:
     logger.info("Cleaning conversation history memory.")
     MEMORY.clean_history()
 
+# LLM singleton instance lazy-loaded
+_LLM_INSTANCE = None
+
 def get_optimal_threads(reserve=2) -> int:
     total = os.cpu_count() or 4
     threads = max(1, total - reserve)
     logger.info(f"Using {threads} threads out of {total} logical cores (reserved {reserve} cores).")
     return int(threads)
 
-# Construct absolute/relative path safely
-_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_PATH = os.path.join(_BASE_DIR, "FILES", "model", "model.gguf")
-
-logger.info(f"Initializing LLaMA model from path: {MODEL_PATH}")
-
-LLM = Llama(
-    model_path=MODEL_PATH,
-    n_ctx=4096,
-    n_threads=get_optimal_threads(),
-    verbose=False 
-)
+def get_llm():
+    """Lazily initializes and returns the LLaMA model instance."""
+    global _LLM_INSTANCE
+    if _LLM_INSTANCE is None:
+        _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        model_path = os.path.join(_BASE_DIR, "FILES", "model", "model.gguf")
+        logger.info(f"Initializing LLaMA model from path: {model_path}")
+        _LLM_INSTANCE = llama_cpp.Llama(
+            model_path=model_path,
+            n_ctx=4096,
+            n_threads=get_optimal_threads(),
+            verbose=False
+        )
+    return _LLM_INSTANCE
 
 @track_latency("utils.Responder")
 def Responder(prompt: str) -> str:
@@ -105,7 +110,8 @@ def Responder(prompt: str) -> str:
 
     logger.debug(f"Prompt injection content length: {len(inject)}")
     stop_tokens = ["User:", "ALFRED:", "note:", "Note:", "NOTE:", "\nnote:", "\nNote:", "\nNOTE:", "\nUser said:", "Alfred:"]
-    out = LLM(inject, max_tokens=500, stop=stop_tokens, echo=False)  
+    model = get_llm()
+    out = model(inject, max_tokens=500, stop=stop_tokens, echo=False)  
 
     answer = out["choices"][0]["text"]
     finish_reason = out["choices"][0].get("finish_reason", "")
@@ -116,7 +122,7 @@ def Responder(prompt: str) -> str:
         stripped_ans = answer.strip()
         if stripped_ans and stripped_ans[-1] not in ['.', '!', '?', '"', '\'']:
             elastic_inject = inject + answer
-            elastic_out = LLM(elastic_inject, max_tokens=75, stop=stop_tokens, echo=False)
+            elastic_out = model(elastic_inject, max_tokens=75, stop=stop_tokens, echo=False)
             answer += elastic_out["choices"][0]["text"]
 
     answer = answer.strip()

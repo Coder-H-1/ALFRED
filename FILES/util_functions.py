@@ -1,7 +1,7 @@
 import socket
 import sys
 import os
-import speech_recognition as sr
+lazy import speech_recognition as sr
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
 
@@ -12,14 +12,20 @@ root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if root_dir not in sys.path:
     sys.path.append(root_dir)
 
-try:
-    from alfred_voice import AlfredVoiceModule
-except ImportError as e:
-    logger.error(f"Failed to import alfred_voice from project root: {e}")
-    raise
+# Lazy voice instance singleton
+_ALFRED_VOICE_INSTANCE = None
 
-# Initialize the pocket TTS voice module
-ALFRED_VOICE = AlfredVoiceModule(voice_name="peter_yearsley")
+def get_voice_module():
+    """Lazily load and initialize the pocket TTS voice module."""
+    global _ALFRED_VOICE_INSTANCE
+    if _ALFRED_VOICE_INSTANCE is None:
+        try:
+            from alfred_voice import AlfredVoiceModule
+            _ALFRED_VOICE_INSTANCE = AlfredVoiceModule(voice_name="peter_yearsley")
+        except ImportError as e:
+            logger.error(f"Failed to import alfred_voice from project root: {e}")
+            raise
+    return _ALFRED_VOICE_INSTANCE
 
 @track_latency("util_functions.is_online")
 def is_online(host="8.8.8.8", port=53, timeout=2) -> bool:
@@ -47,44 +53,41 @@ def speak(text: str = None) -> None:
         text = f"{text.rstrip('.')}, sir."
 
     logger.info(f"Speaking: '{text}'")
-    ALFRED_VOICE.speak(text)
+    get_voice_module().speak(text)
 
 def stop_speaking() -> None:
     """Stops current audio playback and flushes TTS queue."""
-    ALFRED_VOICE.stop_speaking()
+    if _ALFRED_VOICE_INSTANCE is not None:
+        _ALFRED_VOICE_INSTANCE.stop_speaking()
 
 def is_speaking() -> bool:
     """Checks if voice is actively playing or generating."""
-    return ALFRED_VOICE.is_speaking
+    if _ALFRED_VOICE_INSTANCE is not None:
+        return _ALFRED_VOICE_INSTANCE.is_speaking
+    return False
 
 
 @track_latency("util_functions.listen_command")
 def listen_command() -> str:
     """Listens to the user speech using speech_recognition."""
-    from FILES.gui_controller import set_input_mode
     r = sr.Recognizer()
     while True:
         with sr.Microphone() as source:
             print("Listening...")
-            set_input_mode(False, "Listening...")
             audio = r.listen(source)
 
         try:
             print("Recognizing...")
-            set_input_mode(False, "Recognizing...")
             query = r.recognize_google(audio, language="en-IN")
             if query:
                 query_str = str(query).lower()
                 logger.info(f"Speech recognition matched: '{query_str}'")
-                set_input_mode(False, "")
                 return query_str
         except sr.UnknownValueError:
             logger.debug("Speech recognition: Unknown value error (could not understand audio)")
-            set_input_mode(False, "")
             return None
         except sr.RequestError as e:
             logger.error(f"Speech recognition Request Error: {e}")
-            set_input_mode(False, "")
             return None
 
 @track_latency("util_functions.search_files")

@@ -15,9 +15,9 @@ MIN_COMPRESS_SIZE = 1024  # 1 KB minimum size threshold
 COMMON_TOKENS = [
     "[INFO]", "[DEBUG]", "[WARNING]", "[ERROR]", "[CRITICAL]",
     "[alfred_voice]", "[root]", "[FILES.memory]", "[FILES.utils]",
-    "[FILES.util_functions]", "[FILES.commands]", "[FILES.gui_controller]",
+    "[FILES.util_functions]", "[FILES.commands]",
     "[FILES.plugin_host]", "[FmWk.bridge]", "[__main__]",
-    "Initializing", "successfully", "Starting", "Failed to", "Received GUI command"
+    "Initializing", "successfully", "Starting", "Failed to"
 ]
 
 def _preprocess_text(text: str) -> bytes:

@@ -11,11 +11,6 @@ from FILES.LATENCY_RECORDER import track_latency
 
 # Component handlers & registries
 from FILES.command_components import (
-    handle_move_window,
-    handle_pin_window,
-    handle_unpin_window,
-    handle_clean_gui,
-    handle_video_controls,
     handle_time,
     handle_date,
     close_application_through_cmd,
@@ -36,8 +31,6 @@ from FILES.command_components import (
     handle_weather,
     handle_decompress_logs,
     handle_compress_logs,
-    BOX_MAPPING,
-    ZONE_MAPPING,
     APP_REGISTRY,
     WEB_REGISTRY
 )
@@ -51,39 +44,20 @@ def process_command(command: str) -> str:
     
     command = multi_replace(str(command), {"open": "$", "start": "$", "close": "&", "end": "&"})
     
-    # 1. Window & GUI Zone Controls
-    if "move window" in command or "move box" in command:
-        return handle_move_window(command)
-
-    elif "pin window" in command or "pin box" in command:
-        return handle_pin_window(command)
-
-    elif "unpin window" in command or "unpin box" in command:
-        return handle_unpin_window(command)
-        
-    elif "clean the gui" in command or "clear the screen" in command:
-        return handle_clean_gui(command)
-
-    # 2. Log Management
-    elif "decompress logs" in command or "expand logs" in command:
+    # 1. Log Management
+    if "decompress logs" in command or "expand logs" in command:
         return handle_decompress_logs(command)
 
     elif "compress logs" in command:
         return handle_compress_logs(command)
 
-    # 3. Weather
+    # 2. Weather
     elif "check weather outside" in command or "check whether outside" in command:
         return handle_weather(command)
             
-    # 4. Memory & Recall
+    # 3. Memory & Recall
     elif "could you repeat what you just said" in command or "repeat what you just said" in command or "repeat the answer" in command:
         return handle_repeat_answer(command)
-
-    # 5. Video Player Controls (GUI overlay)
-    elif any(kw in command for kw in ("video audio only", "play audio only", "show video", "enable video", "mute video", "unmute video", "rewind video", "go back", "forward video", "skip ahead")):
-        res = handle_video_controls(command)
-        if res:
-            return res
 
     # 6. Time & Date
     elif "time" in command and "what" in command:

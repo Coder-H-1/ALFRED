@@ -1,17 +1,6 @@
 """
 command_components package for modular command execution in ALFRED.
 """
-from FILES.command_components.window_management import (
-    handle_move_window,
-    handle_pin_window,
-    handle_unpin_window,
-    handle_clean_gui,
-    BOX_MAPPING,
-    ZONE_MAPPING
-)
-from FILES.command_components.media_controls import (
-    handle_video_controls
-)
 from FILES.command_components.system_status import (
     handle_time,
     handle_date

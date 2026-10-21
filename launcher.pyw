@@ -1,10 +1,9 @@
-import keyboard
 import subprocess
 import threading
 import time
-
-
-from plyer import notification
+import os
+lazy import keyboard
+lazy import plyer
 
 # Import default backend URL fallback
 try:
@@ -12,12 +11,16 @@ try:
 except ImportError:
     PROJECT_NAME = "ALFRED"
 
-notification.notify(
-    title=f"{PROJECT_NAME} Activated",
-    message="Launcher running in background.",
-    app_name=PROJECT_NAME,
-    timeout=5
-)
+def notify_startup():
+    try:
+        plyer.notification.notify(
+            title=f"{PROJECT_NAME} Activated",
+            message="Launcher running in background.",
+            app_name=PROJECT_NAME,
+            timeout=5
+        )
+    except Exception:
+        pass
 
 
 def wait_for_hotkey():
@@ -31,8 +34,25 @@ def wait_for_hotkey():
 
 
 if __name__ == "__main__":    
+    notify_startup()
+
+    if "--profile" in os.sys.argv:
+        try:
+            import profiling.tracing as tracing
+            profiler = tracing.Profile()
+            profiler.enable()
+        except Exception:
+            profiler = None
+    else:
+        profiler = None
+
     threading.Thread(target=wait_for_hotkey, daemon=True).start()
 
     # Keeps launcher running forever
-    while True:
-        time.sleep(0.2)
+    try:
+        while True:
+            time.sleep(0.2)
+    finally:
+        if profiler:
+            profiler.disable()
+            profiler.print_stats()

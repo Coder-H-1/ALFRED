@@ -1,33 +1,34 @@
 import os
 import webbrowser
-import keyboard
+lazy import keyboard
 from FILES.util_functions import search_files
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
 
 logger = get_logger(__name__)
 
-APP_REGISTRY = {
-    "note pad":         {"open": "start notepad", "process": "notepad.exe", "name": "Notepad"},
-    "notepad":          {"open": "start notepad", "process": "notepad.exe", "name": "Notepad"},
-    "cmd":              {"open": "start cmd", "process": "cmd.exe", "name": "Command Prompt"},
-    "command prompt":   {"open": "start cmd", "process": "cmd.exe", "name": "Command Prompt"},
-    "system information":{"open": "start dxdiag", "process": "dxdiag.exe", "name": "System Information"},
-    "code":             {"open": f"antigravity-ide.exe {os.getcwd()}", "process": "antigravity-ide.exe", "name": "Antigravity IDE"},
-    "chrome":           {"open": "start chrome", "process": "chrome.exe", "name": "Chrome"},
-    "firefox":          {"open": "start firefox.exe", "process": "firefox.exe", "name": "Firefox"},
-    "browser":          {"open": "start firefox.exe", "process": "firefox.exe", "name": "Firefox"},
-    "calculator":       {"open": "start calc", "process": "calc.exe", "name": "Calculator"},
-}
+# Core registries frozen for thread-safety and performance
+APP_REGISTRY = frozendict({
+    "note pad":         frozendict({"open": "start notepad", "process": "notepad.exe", "name": "Notepad"}),
+    "notepad":          frozendict({"open": "start notepad", "process": "notepad.exe", "name": "Notepad"}),
+    "cmd":              frozendict({"open": "start cmd", "process": "cmd.exe", "name": "Command Prompt"}),
+    "command prompt":   frozendict({"open": "start cmd", "process": "cmd.exe", "name": "Command Prompt"}),
+    "system information":frozendict({"open": "start dxdiag", "process": "dxdiag.exe", "name": "System Information"}),
+    "code":             frozendict({"open": f"antigravity-ide.exe {os.getcwd()}", "process": "antigravity-ide.exe", "name": "Antigravity IDE"}),
+    "chrome":           frozendict({"open": "start chrome", "process": "chrome.exe", "name": "Chrome"}),
+    "firefox":          frozendict({"open": "start firefox.exe", "process": "firefox.exe", "name": "Firefox"}),
+    "browser":          frozendict({"open": "start firefox.exe", "process": "firefox.exe", "name": "Firefox"}),
+    "calculator":       frozendict({"open": "start calc", "process": "calc.exe", "name": "Calculator"}),
+})
 
-WEB_REGISTRY = {
-    "youtube music":    {"url": "https://music.youtube.com", "name": "Youtube Music in browser"},
-    "stack overflow":   {"url": "https://www.stackoverflow.com", "name": "stackoverflow"},
-    "google":           {"url": "https://www.google.com", "name": "Google"},
-    "search":           {"url": "https://www.google.com", "name": "Google"},
-    "chatter":          {"url": "https://www.chatgpt.com", "name": "ChatGPT"},
-    "chatgpt":          {"url": "https://www.chatgpt.com", "name": "ChatGPT"},
-}
+WEB_REGISTRY = frozendict({
+    "youtube music":    frozendict({"url": "https://music.youtube.com", "name": "Youtube Music in browser"}),
+    "stack overflow":   frozendict({"url": "https://www.stackoverflow.com", "name": "stackoverflow"}),
+    "google":           frozendict({"url": "https://www.google.com", "name": "Google"}),
+    "search":           frozendict({"url": "https://www.google.com", "name": "Google"}),
+    "chatter":          frozendict({"url": "https://www.chatgpt.com", "name": "ChatGPT"}),
+    "chatgpt":          frozendict({"url": "https://www.chatgpt.com", "name": "ChatGPT"}),
+})
 
 @track_latency("commands.close_application_through_cmd")
 def close_application_through_cmd(process_name: str, return_response: str = None) -> str:

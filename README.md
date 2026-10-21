@@ -18,16 +18,15 @@ The project runs entirely locally using GGUF-format models via `llama_cpp`, ensu
 
 1. **Local LLM Conversations**: Integrates with `llama.cpp` to run local LLaMA GGUF models for private, low-latency conversational responses. Includes dynamic elastic text generation to prevent sentence cut-offs.
 2. **Multi-threaded Voice Output**: Leverages [Kyutai's Pocket TTS](https://github.com/kyutai-labs/pocket-tts) model on CPU with sequential playback queueing to deliver high-quality text-to-speech output without blocking main loops.
-3. **Voice & Type Inputs**: Speech recognition parses commands via Google STT, with immediate fallbacks to command typing in the web GUI.
+3. **Voice & Type Inputs**: Speech recognition parses commands via Google STT, with terminal text input support.
 4. **Persistent Memory System**: Combines short-term RAM caching of conversation context with a long-term SQLite database using FTS5 (Full-Text Search) and automatic tagging to recall, search, or forget past conversations.
 5. **System Automation**: Native desktop control interfaces to adjust volume (via `pycaw`), screen brightness, open/close applications (Notepad, Command Prompt, Chrome, WhatsApp, IDEs), toggle system settings, restart, or shutdown.
-6. **Next.js Web Interface**: Beautiful interactive GUI visualizer displaying logs, active query status, dynamic visual components, error popups, and media outputs.
-7. **Model Context Protocol (MCP) Intermediary Bridge**: Connects ALFRED to the Octopus MCP engine using a dedicated async daemon and synchronous facade, supporting fast-path keyword routing, local Qwen tool classification, and standard stdio external tools.
-8. **Real-time Resource Monitoring**: Integrated CPU/RAM stats collector for system status feedback and voice status responses.
-9. **Thread-Safe Daily Latency Profiling**: Automatically tracks execution latency across all core functions with high-precision sub-second tracking, daily file segregation, exit grouping by function, and summary metrics.
-10. **Native Log Compression & Archiving**: Custom binary compression (`.compressed_logs` with magic header `ALF1`, CRC32 validation, and zlib level 9 compression) for rotated daily logs and latency traces.
-11. **Environment Hardening**: All backend routing connections are dynamically resolved through `.env` configurations.
-12. **Smart Audio Ducking**: Automatically detects external audio streams via `pycaw` and ducks volume by 85% during ALFRED speech playback, seamlessly restoring volume upon completion or voice interrupt.
+6. **Model Context Protocol (MCP) Intermediary Bridge**: Connects ALFRED to the Octopus MCP engine using a dedicated async daemon and synchronous facade, supporting fast-path keyword routing, local Qwen tool classification, and standard stdio external tools.
+7. **Real-time Resource Monitoring**: Integrated CPU/RAM stats collector for system status feedback and voice status responses.
+8. **Thread-Safe Daily Latency Profiling**: Automatically tracks execution latency across all core functions with high-precision sub-second tracking, daily file segregation, exit grouping by function, and summary metrics.
+9. **Native Log Compression & Archiving**: Custom binary compression (`.compressed_logs` with magic header `ALF1`, CRC32 validation, and zlib level 9 compression) for rotated daily logs and latency traces.
+10. **Environment Hardening**: All backend routing connections are dynamically resolved through `.env` configurations.
+11. **Smart Audio Ducking**: Automatically detects external audio streams via `pycaw` and ducks volume by 85% during ALFRED speech playback, seamlessly restoring volume upon completion or voice interrupt.
 
 ---
 
@@ -47,23 +46,17 @@ Project/
 ├── requirements.txt      # Python dependencies manifest
 ├── update_report.md      # Detailed research and architecture update report
 ├── version.py            # Project constants and network metadata
-├── Data/                 # GUI settings, config, and layout states
-│   ├── config.json       # Interactive layout widgets configuration
-│   ├── layout_state.json # Pinned and layout zones memory
-│   └── command.txt       # GUI typed command bridge
+├── Data/                 # Application data and logs
 ├── FILES/                # Core Python modules
 │   ├── audio_ducker.py   # Smart volume ducking for background audio during speech
 │   ├── command_components/ # Modular system command subroutines
 │   │   ├── app_launcher.py      # App launch and process lifecycle
 │   │   ├── log_commands.py      # Log viewer and compression triggers
-│   │   ├── media_controls.py    # Media and YouTube playback handlers
 │   │   ├── memory_commands.py   # LTM recall, search, and forget commands
 │   │   ├── search.py            # Google and web queries
 │   │   ├── system_status.py     # Battery, CPU, RAM metrics
-│   │   ├── weather_commands.py  # Weather updates
-│   │   └── window_management.py # Window minimize, maximize, and focus
+│   │   └── weather_commands.py  # Weather updates
 │   ├── commands.py       # Core mapped system command routines
-│   ├── gui_controller.py # Configuration and GUI interaction module
 │   ├── intent.py         # Experimental intent classifier / BERT trainer
 │   ├── LATENCY_RECORDER.py # Thread-safe file-based latency profiler & CLI
 │   ├── log_compressor.py # Custom binary log compressor (.compressed_logs)
@@ -81,29 +74,7 @@ Project/
 │   ├── window_manager.py # pygetwindow layout helper static class
 │   └── youtube_player.py # yt-dlp resilient search and stream extraction
 ├── FmWk/                 # Octopus Model Context Protocol (MCP) framework (external repo)
-├── research/             # MCP deep research and tool development guides
-├── gui/                  # Next.js web GUI interface
-│   ├── app/              # Main layout, styles, page and api endpoints
-│   │   ├── api/          # Internal JSON routes (config, command, logs)
-│   │   │   ├── command/  # Route to post shell commands
-│   │   │   │   └── route.js
-│   │   │   ├── config/   # Route to get/set layout variables
-│   │   │   │   └── route.js
-│   │   │   ├── error/    # Route to submit UI crash errors
-│   │   │   │   └── route.js
-│   │   │   ├── logs/     # Route to stream background execution logs
-│   │   │   │   └── route.js
-│   │   │   └── unpin_zone/ # Route to restore zone placement
-│   │   │       └── route.js
-│   │   ├── favicon.ico   # Browser tab icon
-│   │   ├── globals.css   # Global page styling and animations
-│   │   ├── layout.js     # Shared shell layout configuration
-│   │   ├── page.js       # Core GUI display and interaction page
-│   │   └── page.module.css # Component-specific stylesheet
-│   ├── public/           # Static assets (svg icons)
-│   ├── jsconfig.json     # VSCode JS mapping configurations
-│   ├── package.json      # Node.js project configuration
-│   └── next.config.mjs   # Next.js server configuration
+└── research/             # MCP deep research and tool development guides
 ```
 
 ---
@@ -122,19 +93,16 @@ Project/
 ```mermaid
 flowchart TD
     Launcher[launcher.pyw background poller] -->|alt+shift+a+s+d| Launch[Start main.py]
-    Launch --> ResetGUI[Reset layout & state json files]
-    Launch --> StartServer[Spawn Next.js dev server]
-    Launch --> OpenBrowser[Open web browser to GUI]
     Launch --> InitTTS[Initialize pocket-tts & load models]
     Launch --> StartSocket[Start plugin listener on port 65432]
     
     StartSocket --> Loop[Listen Loop]
     Loop --> Input{Input Command}
     Input -->|Voice| Speech[sr.Recognizer / Google STT]
-    Input -->|Type| GUIInput[gui_controller.py read_gui_command]
+    Input -->|Type| ConsoleInput[Terminal console input]
     
     Speech --> Process[process_command matching]
-    GUIInput --> Process
+    ConsoleInput --> Process
     
     Process -->|1. Switch Mode| Toggle[Toggle type/voice input mode]
     Process -->|2. Exit/Restart| Terminate[Save memory and exit sys]
@@ -155,18 +123,12 @@ flowchart TD
 ## Setup & Execution
 
 ### 1. Prerequisites
-Ensure you have Python 3.10+ and Node.js installed.
+Ensure you have Python 3.10+ installed.
 
 ### 2. Installation
 Install the required dependencies:
 ```bash
 pip install -r requirements.txt
-```
-
-Navigate to the `gui/` directory and install the Node.js packages:
-```bash
-cd gui
-npm install
 ```
 
 ### 3. Environment Config

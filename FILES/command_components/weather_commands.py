@@ -1,5 +1,5 @@
 import os
-import requests
+lazy import requests
 from FILES.utils import Responder
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
