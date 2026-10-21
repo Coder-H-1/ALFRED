@@ -1,6 +1,6 @@
 # A.L.F.R.E.D
 
-**Automated Limited Functionality Responsive Educational Development (system)**
+**Automated Logistics for Facilitating Resources and Executive Duties**
 
 A.L.F.R.E.D is a chat-based, responsive, command-structured automation system powered by locally running pretrained Large Language Models (LLMs). It is designed to function as a background assistant capable of understanding natural language commands and executing system-level actions on Windows.
 

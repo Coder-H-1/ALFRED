@@ -1,7 +1,6 @@
-backend/*
+backend/
 PROMPT.txt
 FmWk/
-backend/
 Mem/
 model/
 research/
