@@ -1,15 +1,13 @@
---extra-index-url https://download.pytorch.org/whl/nightly/cpu
-
-# Core Voice, LLM & Audio
-torch>=2.5.0
-pocket-tts
+# ==============================================================================
+# SECTION 1: Standard Pure-Python & Clean Pre-compiled Wheels (Install First)
+# ==============================================================================
+requests>=2.31.0
+python-dotenv>=1.0.0
+beautifulsoup4>=4.12.0
+orjson>=3.10.0
 sounddevice
-numpy
-llama-cpp-python
 SpeechRecognition>=3.14.0
-pyaudio
-
-# Hardware, System & UI Automation
+yt-dlp
 psutil>=5.9.8
 keyboard>=0.13.5
 plyer>=2.1.0
@@ -18,17 +16,48 @@ pygetwindow>=0.0.9
 pywin32>=310
 comtypes>=1.4.11
 screen-brightness-control>=0.24.2
+safetensors
+einops
+scipy
+soundfile
+fastapi
+pydantic
+Pillow
+opencv-python>=5.0.0
+imageio-ffmpeg>=0.6.0
+miniaudio>=1.71
+tokenizers
+typer
+uvicorn
 
-# Web, Media & Framework Utilities
-beautifulsoup4>=4.12.0
-requests>=2.31.0
-python-dotenv>=1.0.0
-orjson>=3.10.0
-yt-dlp
-
-# Optional / Legacy Dependencies
+# Optional / Aux
 duckduckgo_search>=8.0.0
 transformers>=4.40.0
 pyttsx3>=2.90
 python_vlc>=3.0.20000
 pywebview>=5.0
+pyaudio
+
+# ==============================================================================
+# SECTION 2: Complex / Platform / Heavy Binary Modules
+# ==============================================================================
+numpy
+
+# PyTorch (Nightly CPU index for latest Python e.g. 3.14)
+--extra-index-url https://download.pytorch.org/whl/nightly/cpu
+torch>=2.5.0
+
+# Pocket TTS (Install after torch & audio libraries)
+pocket-tts
+
+# LLaMA C++ Python bindings (Requires prebuilt wheel or CMake/C++ toolchain)
+llama-cpp-python
+
+# ==============================================================================
+# SECTION 3: Error-Prone / Build-Heavy Modules (Prebuilt Wheel Required)
+# ==============================================================================
+# On Python 3.14+ Windows, 'pip install sentencepiece' fails because no source 
+# CMake compiler is found by default.
+# Use prebuilt wheel from: https://pypi.org/project/sentencepiece/#files
+# e.g.: pip install sentencepiece-0.2.2-cp314-cp314-win_amd64.whl
+sentencepiece>=0.2.2

@@ -1,7 +1,7 @@
 import socket
 import sys
 import os
-lazy import speech_recognition as sr
+import speech_recognition as sr
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
 
@@ -65,6 +65,14 @@ def is_speaking() -> bool:
     if _ALFRED_VOICE_INSTANCE is not None:
         return _ALFRED_VOICE_INSTANCE.is_speaking
     return False
+
+def wait_until_done_speaking(timeout: float = 60.0) -> None:
+    """Waits until ALFRED finishes speaking, or timeout expires."""
+    import time
+    start = time.time()
+    while is_speaking() and (time.time() - start < timeout):
+        time.sleep(0.1)
+
 
 
 @track_latency("util_functions.listen_command")

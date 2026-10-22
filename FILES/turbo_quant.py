@@ -18,6 +18,16 @@ from typing import Tuple, Optional, Dict, Any, List, Union
 # 1. Fast Walsh-Hadamard Transform (FWHT)
 # ─────────────────────────────────────────────────────────────────────────────
 
+try:
+    from FILES.turbo_ops import fwht_1d_fast as _c_fwht_1d, fwht_2d_fast as _c_fwht_2d
+    _HAS_TURBO_OPS = True
+except ImportError:
+    try:
+        from turbo_ops import fwht_1d_fast as _c_fwht_1d, fwht_2d_fast as _c_fwht_2d
+        _HAS_TURBO_OPS = True
+    except ImportError:
+        _HAS_TURBO_OPS = False
+
 def _next_power_of_2(n: int) -> int:
     """Returns the smallest power of 2 greater than or equal to n."""
     if n <= 0:
@@ -31,6 +41,9 @@ def fwht_1d(x: np.ndarray) -> np.ndarray:
     x is automatically padded to power-of-2 dimension.
     Orthogonal: FWHT(FWHT(x)) == x.
     """
+    if _HAS_TURBO_OPS:
+        return _c_fwht_1d(np.ascontiguousarray(x, dtype=np.float32))
+
     orig_len = len(x)
     n = _next_power_of_2(orig_len)
     
@@ -60,6 +73,9 @@ def fwht_2d(matrix: np.ndarray) -> np.ndarray:
     """
     Applies FWHT across the last dimension of a 2D array [batch, dim].
     """
+    if _HAS_TURBO_OPS:
+        return _c_fwht_2d(np.ascontiguousarray(matrix, dtype=np.float32))
+
     batch_size, dim = matrix.shape
     n = _next_power_of_2(dim)
     
@@ -82,6 +98,7 @@ def fwht_2d(matrix: np.ndarray) -> np.ndarray:
         
     a /= math.sqrt(n)
     return a
+
 
 
 # ─────────────────────────────────────────────────────────────────────────────

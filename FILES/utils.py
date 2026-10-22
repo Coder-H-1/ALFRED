@@ -22,7 +22,7 @@ import os
 import datetime
 import random
 import re
-lazy import llama_cpp
+import llama_cpp
 from FILES.memory import MEMORY
 from FILES.util_functions import multi_replace
 from FILES.logger import get_logger
@@ -76,19 +76,23 @@ def get_optimal_threads(reserve=2) -> int:
     return int(threads)
 
 def get_llm():
-    """Lazily initializes and returns the LLaMA model instance."""
+    """Lazily initializes and returns the LLaMA model instance with TurboQuant 4-bit KV cache and 32k context."""
     global _LLM_INSTANCE
     if _LLM_INSTANCE is None:
         _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         model_path = os.path.join(_BASE_DIR, "FILES", "model", "model.gguf")
-        logger.info(f"Initializing LLaMA model from path: {model_path}")
+        logger.info(f"Initializing LLaMA model with TurboQuant KV Cache (32k context) from path: {model_path}")
         _LLM_INSTANCE = llama_cpp.Llama(
             model_path=model_path,
-            n_ctx=4096,
+            n_ctx=32768,
+            type_k=llama_cpp.GGML_TYPE_Q4_0,
+            type_v=llama_cpp.GGML_TYPE_Q4_0,
+            flash_attn=True,
             n_threads=get_optimal_threads(),
             verbose=False
         )
     return _LLM_INSTANCE
+
 
 @track_latency("utils.Responder")
 def Responder(prompt: str) -> str:
