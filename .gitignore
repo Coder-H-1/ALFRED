@@ -3,6 +3,7 @@ PROMPT.txt
 FmWk/
 Mem/
 model/
+FILES/bin/*.exe
 research/
 
 .agents

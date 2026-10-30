@@ -8,7 +8,7 @@ A.L.F.R.E.D is a chat-based, responsive, command-structured automation system po
 
 ### 📌 Project Overview
 
-A.L.F.R.E.D acts as an intelligent automation layer between the user and the operating system. It combines LLM inference, speech recognition, system control, hotkey-based background execution, and an independent GUI rendering HUD with process-isolated multi-window capabilities into a single cohesive workflow.
+A.L.F.R.E.D acts as an intelligent automation layer between the user and the operating system. It combines LLM inference, speech recognition, system control, hotkey-based background execution, an independent GUI rendering HUD with process-isolated multi-window capabilities, and local headless web scraping into a single cohesive workflow.
 
 The project runs entirely locally using GGUF-format models via `llama_cpp`, ensuring privacy and offline functionality.
 
@@ -34,6 +34,11 @@ The project runs entirely locally using GGUF-format models via `llama_cpp`, ensu
 12. **Thread-Safe Daily Latency Profiling**: Automatically tracks execution latency across all core functions with high-precision sub-second tracking, daily file segregation, exit grouping by function, and summary metrics.
 13. **Native Log Compression & Archiving**: Custom binary compression (`.compressed_logs` with magic header `ALF1`, CRC32 validation, and zlib level 9 compression) for rotated daily logs and latency traces.
 14. **Smart Audio Ducking**: Automatically detects external audio streams via `pycaw` and ducks volume by 85% during ALFRED speech playback, seamlessly restoring volume upon completion or voice interrupt.
+15. **Local Stealth Web Scraper & Knowledge Grounding (Obscura)**:
+    - **Ultra-Lightweight Rust Engine**: Embeds [h4ckf0r0day/obscura](https://github.com/h4ckf0r0day/obscura), consuming only ~30–60 MB RAM (compared to 500 MB–1.5 GB for headless Chromium).
+    - **V8 JavaScript Execution & Stealth Mode**: Executes dynamic SPAs and client-side scripts with Google's V8 engine while masking automation markers (`navigator.webdriver = undefined`), randomizing browser fingerprints, and blocking >3,500 tracking domains.
+    - **Zero Cloud Scraper Dependencies**: Operates 100% locally with zero external scraping API costs (no ScrapingBee, Firecrawl, or BrightData subscriptions needed) and zero telemetry or analytics collection.
+    - **Context Refinement & In-Memory Lifecycle**: Converts pages directly to clean hierarchical Markdown, trims navigational bloat, enforces a strict 5,000–7,000 word ceiling for LLaMA 32k context, and discards transient data from memory immediately after response generation with zero disk junk.
 
 ---
 
@@ -56,13 +61,17 @@ Project/
 ├── Data/                 # Application data and logs
 ├── FILES/                # Core Python modules
 │   ├── audio_ducker.py   # Smart volume ducking for background audio during speech
+│   ├── bin/              # Local standalone binaries
+│   │   ├── obscura.exe   # Obscura Rust headless browser engine
+│   │   └── obscura-worker.exe # Obscura worker rendering process
 │   ├── command_components/ # Modular system command subroutines
 │   │   ├── app_launcher.py      # App launch, space-agnostic web registry & lifecycle
 │   │   ├── log_commands.py      # Log viewer and compression triggers
 │   │   ├── memory_commands.py   # LTM recall, search, and forget commands
 │   │   ├── search.py            # Google and web queries
 │   │   ├── system_status.py     # Battery, CPU, RAM metrics
-│   │   └── weather_commands.py  # Weather updates
+│   │   ├── weather_commands.py  # Weather updates via OpenWeather API
+│   │   └── web_search_commands.py # Live web search & URL scraper command handler
 │   ├── commands.py       # Core mapped system command routines
 │   ├── gui_controller.py # Controller interface for IGUIRS HUD & dynamic windows
 │   ├── intent.py         # Experimental intent classifier / BERT trainer
@@ -74,6 +83,7 @@ Project/
 │   ├── model_manager.py  # Loader / unloader for local GGUF models
 │   ├── plugin_host.py    # Octopus Model Context Protocol (MCP) Bridge adapter
 │   ├── resource_monitor.py # System CPU/RAM tracking module
+│   ├── scraper.py        # Obscura headless browser driver, link resolver & text refiner
 │   ├── system_control.py # Pycaw volume / Screen-brightness control routines
 │   ├── turbo_ops.pyd     # Compiled Cython accelerated quantization operations
 │   ├── turbo_ops.pyx     # Cython source for TurboQuant vector operations
@@ -105,6 +115,7 @@ Project/
 - **Process Isolation**: Dynamic secondary windows operate in dedicated OS processes with independent Tkinter event loops; crashes in video streaming or external decoders cannot terminate the main assistant HUD.
 - **Direct Streaming Over Full Buffering**: Animation frames stream directly from container files to eliminate memory spikes and enable instant state changes.
 - **Priority-Driven Preemption**: Direct user commands prefixed with `alfred` override background task queues and interrupt ongoing speech immediately.
+- **In-Memory Ephemeral Scraping**: Scraped live web data is processed strictly in-memory and purged immediately after response synthesis; zero permanent cached files clutter the filesystem.
 - **Optimal Reusability**: Common helpers such as string replacement, audio ducking, and sound synthesis are centralized under `FILES/util_functions.py` and `alfred_voice.py`.
 - **Zero-Hardcoding**: Endpoints like `OpenWeatherKey` are sourced dynamically from `.env`.
 - **Structured Operations Logging**: Every module utilizes a centralized logger in `FILES/logger.py` writing rotating logs to `logs/alfred.log` at the `DEBUG` level while displaying essential information to the console.
@@ -144,9 +155,12 @@ flowchart TD
     Process -->|2. Exit/Restart| Terminate[Save memory, close GUI, exit sys]
     Process -->|3. Plugins match| PluginRun[Execute dynamically hot-loaded script]
     Process -->|4. Hardcoded actions| SysAction[Run system control/app/weather action]
-    Process -->|5. General conversation| LLMResponse[Prompt LLaMA responder]
+    Process -->|5. Web Search & Scrape| ObscuraScrape[Obscura Subprocess fetch & Markdown Refiner]
+    Process -->|6. General conversation| LLMResponse[Prompt LLaMA responder]
     
-    SysAction --> SetWork[Set HUD state: work]
+    ObscuraScrape --> GroundPrompt[Ground live web context into LLaMA Responder]
+    GroundPrompt --> SetWork[Set HUD state: work]
+    SysAction --> SetWork
     PluginRun --> SetWork
     LLMResponse --> SetWork
     
@@ -155,6 +169,28 @@ flowchart TD
     SaveMem --> SetRest2[Set HUD state: rest]
     SetRest2 --> Loop
 ```
+
+---
+
+## 🌐 Local Headless Web Scraping (Obscura Engine)
+
+ALFRED integrates **Obscura** ([h4ckf0r0day/obscura](https://github.com/h4ckf0r0day/obscura)), an open-source Rust-based headless browser engine, providing real-time live internet awareness to ground the local LLaMA model in up-to-date facts.
+
+### 1. Key Technical Highlights
+- **Engine**: Pure Rust implementation compiling down to a standalone binary with embedded Google V8 (`deno_core`) for dynamic DOM tree and JavaScript evaluation.
+- **Resource Footprint**: Consumes roughly ~30–60 MB RAM during page load compared to 500 MB–1.5 GB for Chromium/Playwright.
+- **Lazy Lifecycle**: Executes as an on-demand single-shot CLI subprocess (`obscura.exe fetch <URL> --dump markdown --stealth -q`). The process terminates immediately upon completion, returning all RAM to the operating system.
+- **Built-in Anti-Detection**: Features stealth mode with TLS fingerprint randomization, `navigator.webdriver = undefined` spoofing, and automatic blocking of over 3,500 tracking domains.
+- **In-Memory Sanitization**: Content is converted directly into clean hierarchical Markdown, refined to strip navigational boilerplate, capped to 5,000–7,000 words to respect the 32k context LLM budget, and destroyed from memory immediately after synthesis.
+
+### 2. Supported Commands
+Trigger real-time web research using natural voice or typed commands:
+- `alfred search the web for <topic>`
+- `alfred search online for <topic>`
+- `alfred search internet for <topic>`
+- `alfred browse the web for <query>`
+- `alfred look up online <topic>`
+- `alfred scrape website <url>`
 
 ---
 
@@ -197,13 +233,19 @@ Install the required dependencies:
 pip install -r requirements.txt
 ```
 
-### 3. Environment Config
+### 3. Local Model & Obscura Engine Setup
+1. **LLaMA GGUF Model**: Place your quantized GGUF model at `FILES/model/model.gguf`.
+2. **Obscura Headless Browser**:
+   - Download the precompiled Windows release (`obscura-x86_64-windows-stealth.zip`) from the official [h4ckf0r0day/obscura Releases](https://github.com/h4ckf0r0day/obscura/releases).
+   - Extract `obscura.exe` and `obscura-worker.exe` into the `FILES/bin/` folder.
+
+### 4. Environment Config
 Create a `.env` file in the root directory:
 ```env
 OpenWeatherKey=your-openweather-api-key
 ```
 
-### 4. Run Launcher
+### 5. Run Launcher
 To run ALFRED in the background:
 ```bash
 pythonw launcher.pyw
@@ -248,15 +290,46 @@ python .\FILES\LATENCY_RECORDER.py --clean
 
 ---
 
-### 💻 System Requirements (Tested On)
+### System Requirements (Tested On)
 
-- **Operating System**: Windows 10 / Windows 11
-- **Python Version**: Python 3.12.6 / Python 3.14 (64-bit)
+- **Operating System**: Windows 11
+- **Python Version**: Python 3.14 (64-bit)
 - **Architecture**: x86-64 CPU (no discrete GPU strictly required)
 
 ---
 
-### ⚠️ Disclaimer
+## ⚖️ Third-Party Notices, Trademarks & Legal Disclaimers
+
+This project incorporates and interfaces with open-source software, standards, and third-party services. All product names, logos, brands, and trademarks are the property of their respective owners.
+
+- **Obscura Headless Browser Engine**:
+  - Copyright © 2024–2026 `h4ckf0r0day` and contributors.
+  - Licensed under the **Apache License, Version 2.0**.
+  - Used as an external, standalone CLI binary for local HTML/DOM rendering and web scraping automation without modifying the upstream source. Upstream project: [github.com/h4ckf0r0day/obscura](https://github.com/h4ckf0r0day/obscura).
+- **Pocket TTS**:
+  - Developed and open-sourced by **Kyutai Labs** ([Kyutai](https://github.com/kyutai-labs/pocket-tts)).
+  - Used for local lightweight neural voice synthesis on CPU.
+- **llama.cpp / llama-cpp-python**:
+  - Copyright © 2023–2026 Georgi Gerganov and contributors.
+  - Licensed under the **MIT License**.
+- **DuckDuckGo**:
+  - "DuckDuckGo" is a registered trademark of Duck Duck Go, Inc.
+  - Query references in this codebase represent nominative fair use to describe publicly available HTML endpoints. This project is not affiliated with, endorsed by, or sponsored by Duck Duck Go, Inc.
+- **OpenWeatherMap**:
+  - Weather data and forecasts provided by **OpenWeather Ltd**.
+  - Usage requires an active user-provided API key subject to the [OpenWeather Terms of Service](https://openweather.co.uk/).
+- **Model Context Protocol (MCP)**:
+  - Model Context Protocol specification created by **Anthropic, PBC**.
+- **Open Source Libraries**:
+  - Includes components utilizing OpenCV (Apache 2.0), PyAudio (MIT), yt-dlp (The Unlicense), pycaw (MIT), SpeechRecognition (BSD), and Pygame (LGPL).
+
+> [!IMPORTANT]
+> **Web Scraping & Acceptable Use Disclaimer**:
+> A.L.F.R.E.D is designed as a personal assistant and automation client. Users are solely responsible for ensuring that all web scraping and research activities performed via Obscura comply with the relevant target websites' Terms of Service, Acceptable Use Policies, applicable copyright laws, and `robots.txt` guidelines. The maintainers of this project do not endorse or encourage unauthorized data harvesting, commercial republishing, or circumvention of access controls.
+
+---
+
+### Disclaimer
 
 This project is intended for educational and experimental purposes. Users are responsible for the commands executed by the system.
 

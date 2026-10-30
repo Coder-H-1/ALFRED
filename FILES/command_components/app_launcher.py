@@ -29,71 +29,73 @@ WEB_REGISTRY = {
     "gemini":          {"url": "https://gemini.google.com/app", "name": "Gemini"},
 }
 
+from FmWk.tools.system_tools import (
+    open_app as mcp_open_app,
+    close_app as mcp_close_app,
+    open_workspace as mcp_open_workspace,
+    close_workspace as mcp_close_workspace,
+    show_desktop as mcp_show_desktop,
+)
+
 @track_latency("commands.close_application_through_cmd")
 def close_application_through_cmd(process_name: str, return_response: str = None) -> str:
-    logger.info(f"Attempting to close process: {process_name}")
-    if " " in process_name:
-        process_name = process_name.split(" ")[-1]
-    os.system(f"taskkill /f /im {process_name}")
-    return return_response or f"Closed {process_name}"
+    logger.info(f"Closing application via unified MCP: {process_name}")
+    res = mcp_close_app(process_name)
+    return return_response or res.get("status") or res.get("error")
 
 @track_latency("commands.process_command.app_launcher")
 def handle_app_registry(command: str) -> str:
-    for app_key, details in APP_REGISTRY.items():
+    for app_key in APP_REGISTRY.keys():
         if f"$ {app_key}" in command:
-            logger.info(f"Launching app: {details['name']} via {details['open']}")
-            os.system(details["open"])
-            return f"Opening {details['name']}."
+            logger.info(f"Launching app '{app_key}' via unified MCP")
+            res = mcp_open_app(app_key)
+            return res.get("status") or res.get("error")
         elif f"& {app_key}" in command:
-            logger.info(f"Closing app: {details['name']} via taskkill {details['process']}")
-            return close_application_through_cmd(details["process"], f"Closed {details['name']}")
+            logger.info(f"Closing app '{app_key}' via unified MCP")
+            res = mcp_close_app(app_key)
+            return res.get("status") or res.get("error")
     return None
 
 @track_latency("commands.process_command.web_launcher")
 def handle_web_registry(command: str) -> str:
-    for web_key, details in WEB_REGISTRY.items():
-        web_key = "".join([i for i in web_key.split(" ")])
-        if f"${web_key}" in "".join([i for i in command.split(" ")]):
-            logger.info(f"Opening URL: {details['url']} in browser")
-            webbrowser.open_new_tab(details["url"])
-            return f"Opening {details['name']}"
+    for web_key in WEB_REGISTRY.keys():
+        clean_key = "".join(web_key.split(" "))
+        if f"${clean_key}" in "".join(command.split(" ")):
+            logger.info(f"Opening web app '{web_key}' via unified MCP")
+            res = mcp_open_app(web_key)
+            return res.get("status") or res.get("error")
     return None
 
 @track_latency("commands.process_command.task_manager")
 def handle_task_manager(command: str) -> str:
     if "$ taskmanager" in command or "$ task manager" in command or "$ resource monitor" in command:
-        try:
-            logger.info("Opening Task Manager via hotkey")
-            keyboard.press_and_release("ctrl + shift + esc")
-            return "Opening Task manager"
-        except Exception as e:
-            logger.error(f"Failed to open Task Manager: {e}", exc_info=True)
-            return f"Failed to open Task manager: {e}"
+        app_target = "task manager" if "task" in command else "resource monitor"
+        logger.info(f"Opening Task Manager / Resource Monitor via unified MCP: {app_target}")
+        res = mcp_open_app(app_target)
+        return res.get("status") or res.get("error")
     elif "& taskmanager" in command or "& task manager" in command or "& resource monitor" in command:
-        logger.info("Close Task Manager requested (conflicted)")
-        return "I am having conflits in closing Task manager, sir.\nStopping the task."
+        app_target = "task manager" if "task" in command else "resource monitor"
+        logger.info(f"Closing Task Manager / Resource Monitor via unified MCP: {app_target}")
+        res = mcp_close_app(app_target)
+        return res.get("status") or res.get("error")
     return None
 
 @track_latency("commands.process_command.desktop")
 def handle_desktop(command: str) -> str:
-    try:
-        logger.info("Going to desktop via hotkey")
-        keyboard.press_and_release("win + d")
-        return "You are on Desktop now."
-    except Exception as e:
-        logger.error(f"Failed to show desktop: {e}", exc_info=True)
-        return f"Failed to go to desktop: {e}"
+    logger.info("Triggering show desktop via unified MCP")
+    res = mcp_show_desktop()
+    return res.get("status") or res.get("error")
 
 @track_latency("commands.process_command.workspace")
 def handle_workspace(command: str) -> str:
     if "$ workplace" in command or "$ workspace" in command or "$ work place" in command or "$ work space" in command:
-        logger.info("Opening full Workspace environment")
-        webbrowser.open_new_tab("https://gemini.google.com/")
-        os.system(f"antigravity-ide {os.getcwd()}")
-        return "Opening Workspace."
+        logger.info("Opening full Workspace environment via unified MCP")
+        res = mcp_open_workspace()
+        return res.get("status") or res.get("error")
     elif "& workplace" in command or "& workspace" in command or "& work place" in command or "& work space" in command:
-        logger.info("Closing Workspace environment")
-        return close_application_through_cmd("antigravity-ide.exe", "Closed Workspace")
+        logger.info("Closing Workspace environment via unified MCP")
+        res = mcp_close_workspace()
+        return res.get("status") or res.get("error")
     return None
 
 @track_latency("commands.process_command.system_settings")

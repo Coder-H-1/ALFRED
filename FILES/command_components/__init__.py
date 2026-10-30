@@ -28,4 +28,5 @@ from FILES.command_components.memory_commands import (
 )
 from FILES.command_components.weather_commands import handle_weather
 from FILES.command_components.log_commands import handle_decompress_logs, handle_compress_logs
+from FILES.command_components.web_search_commands import handle_web_search
 

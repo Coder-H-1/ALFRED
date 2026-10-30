@@ -70,15 +70,36 @@ def save_config(cfg: dict) -> bool:
 def set_gui_state(state: str, fps: int = None, size_reduce_pct: float = None):
     """
     Update IGUIRS avatar main state via config.json.
+    Guarded so state transitions do not interrupt or break active speech.
     """
+    try:
+        from FILES.util_functions import is_speaking
+        if is_speaking() and state in ("rest", "listening", "thinking"):
+            logger.debug(f"Speech is actively playing; deferring state transition to '{state}'.")
+            return
+    except Exception:
+        pass
+
     cfg = get_current_config()
     if "main" not in cfg:
         cfg["main"] = {}
 
-    cfg["main"]["state"] = state
-    if fps is not None:
+    curr_state = cfg["main"].get("state")
+    curr_fps = cfg["main"].get("fps")
+    curr_reduce = cfg["main"].get("size_reduce_percentage")
+
+    state_changed = (state is not None and curr_state != state)
+    fps_changed = (fps is not None and curr_fps != int(fps))
+    reduce_changed = (size_reduce_pct is not None and curr_reduce != float(size_reduce_pct))
+
+    if not (state_changed or fps_changed or reduce_changed):
+        return
+
+    if state_changed:
+        cfg["main"]["state"] = state
+    if fps_changed:
         cfg["main"]["fps"] = int(fps)
-    if size_reduce_pct is not None:
+    if reduce_changed:
         cfg["main"]["size_reduce_percentage"] = float(size_reduce_pct)
 
     logger.info(f"Updated main GUI state: state={state}, fps={fps}, size_reduce={size_reduce_pct}")
@@ -152,3 +173,115 @@ def close_gui():
         except Exception as e:
             logger.error(f"Error terminating GUI process: {e}")
         _GUI_PROCESS = None
+
+
+STATUS_PATH = IGUIRS_DIR / "runtime_status.json"
+
+
+def get_window_status(win_id: str) -> dict:
+    """
+    Retrieves runtime status of a window (x, y, width, height, fps).
+    Reads from runtime_status.json with fallback to config.json.
+    """
+    # 1. Try reading live runtime telemetry
+    if STATUS_PATH.exists():
+        try:
+            with open(STATUS_PATH, "r", encoding="utf-8") as f:
+                status_map = json.load(f)
+            if win_id in status_map:
+                entry = status_map[win_id]
+                entry["name"] = win_id
+                entry["exists"] = True
+                return entry
+        except Exception:
+            pass
+
+    # 2. Fallback to static config
+    cfg = get_current_config()
+    if win_id == "main":
+        main_cfg = cfg.get("main", {})
+        return {
+            "name": "main",
+            "exists": True,
+            "status": "open",
+            "state": main_cfg.get("state", "rest"),
+            "x": 0,
+            "y": 0,
+            "width": 400,
+            "height": 400,
+            "fps": main_cfg.get("fps", 30)
+        }
+
+    if win_id in cfg and isinstance(cfg[win_id], dict):
+        w_entry = cfg[win_id]
+        extra_args = w_entry.get("extra-args", [])
+        w, h = 800, 600
+        for arg in extra_args:
+            if isinstance(arg, str):
+                if "--width=" in arg:
+                    try:
+                        w = int(arg.split("=")[1])
+                    except Exception:
+                        pass
+                elif "--height=" in arg:
+                    try:
+                        h = int(arg.split("=")[1])
+                    except Exception:
+                        pass
+        return {
+            "name": win_id,
+            "exists": True,
+            "status": "open",
+            "type": w_entry.get("type", "video"),
+            "data": w_entry.get("data", ""),
+            "x": 0,
+            "y": 0,
+            "width": w,
+            "height": h,
+            "fps": 30
+        }
+
+    return {
+        "name": win_id,
+        "exists": False,
+        "status": "closed",
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "fps": 0
+    }
+
+
+def clean_all_subwindows() -> list:
+    """Removes all dynamic secondary windows from config."""
+    cfg = get_current_config()
+    removed = []
+    keys = [k for k in cfg.keys() if k != "main"]
+    for k in keys:
+        del cfg[k]
+        removed.append(k)
+    if removed:
+        save_config(cfg)
+        logger.info(f"Cleaned all secondary dynamic windows: {removed}")
+    return removed
+
+
+def show_data(items: list):
+    """
+    Backward compatibility wrapper for legacy show_data calls.
+    Directs payloads into the dynamic window system.
+    """
+    if not items:
+        remove_window("youtube_window")
+        return
+
+    item = str(items[0])
+    if item.startswith("youtube:") or item.startswith("video:"):
+        payload = item.split(":", 1)[1]
+    else:
+        payload = item
+
+    launch_gui()
+    add_window("youtube_window", "video", payload, ["--width=800", "--height=600"])
+

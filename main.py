@@ -1,6 +1,6 @@
 from FILES.utils import Responder, get_greeting, MEMORY
 from FILES.commands import process_command
-from FILES.util_functions import listen_command, speak, stop_speaking, is_speaking
+from FILES.util_functions import listen_command, speak, stop_speaking, is_speaking, wait_until_done_speaking
 from FILES.plugin_host import start_plugin_listener, match_dynamic_command
 from FILES.log_compressor import compress_all_rotated_logs
 from FILES.logger import get_logger
@@ -66,8 +66,9 @@ def main():
     os.system("cls")
     
     speak(get_greeting())
-    set_gui_state("rest")
     start_plugin_listener()
+    wait_until_done_speaking()
+    set_gui_state("rest")
     interrupted_speech = False
     message_queue = deque()
 
@@ -161,21 +162,24 @@ def main():
             query_received_at=q_start,
             output_at=q_end
         )
+        wait_until_done_speaking()
         set_gui_state("rest")
 
     while True:
         try:
-            # If items in queue and not currently processing/speaking, process next queued item
-            if message_queue and not is_speaking():
+            # If assistant is still speaking, wait until completed before listening
+            if is_speaking():
+                wait_until_done_speaking()
                 set_gui_state("rest")
+
+            # If items in queue, process next queued item
+            if message_queue:
                 next_cmd = message_queue.popleft()
                 logger.info(f"Processing next query from queue ({len(message_queue)} remaining): '{next_cmd}'")
                 handle_query_execution(next_cmd)
-                set_gui_state("rest")
                 continue
 
             q_start = time.time()
-            was_speaking = is_speaking()
             set_gui_state("listening")
             command = Command()
             if command is None: 
@@ -184,6 +188,7 @@ def main():
 
             command = command.strip()
             if not command:
+                set_gui_state("rest")
                 continue
 
             has_alfred = bool(re.match(r"^alfred\b", command, re.IGNORECASE))

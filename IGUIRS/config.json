@@ -2,6 +2,6 @@
     "main": {
         "state": "rest",
         "fps": 30,
-        "size_reduce_percentage": 0.0
+        "size_reduce_percentage": 60.0
     }
 }

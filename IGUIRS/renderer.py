@@ -392,9 +392,13 @@ class IguirsRenderer:
                 next_index = self.frame_index + 1
                 if next_index >= self.total_frames:
                     self.frame_index = 0
-                    gif_candidates = self._get_state_gifs(self.current_state)
-                    if len(gif_candidates) > 1:
-                        self._load_state_media(self.current_state)
+                    self.loop_count = getattr(self, 'loop_count', 0) + 1
+                    # Only occasionally switch variants after multiple full loops to prevent disk thrashing
+                    if self.loop_count >= 6:
+                        self.loop_count = 0
+                        gif_candidates = self._get_state_gifs(self.current_state)
+                        if len(gif_candidates) > 1:
+                            self._load_state_media(self.current_state)
                 else:
                     self.frame_index = next_index
             except Exception:

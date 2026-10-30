@@ -109,6 +109,9 @@ class AlfredVoiceModule:
     @property
     def is_speaking(self) -> bool:
         """Returns True if audio is actively playing or speech chunks are in queue."""
+        with self._chunks_lock:
+            if getattr(self, "_remaining_chunks", 0) > 0:
+                return True
         if getattr(self, "_currently_playing", False):
             return True
         if hasattr(self, "generation_queue") and not self.generation_queue.empty():

@@ -31,6 +31,7 @@ from FILES.command_components import (
     handle_weather,
     handle_decompress_logs,
     handle_compress_logs,
+    handle_web_search,
     APP_REGISTRY,
     WEB_REGISTRY
 )
@@ -118,6 +119,10 @@ def process_command(command: str) -> str:
     # 13. File Search
     elif "search file" in command or "find file" in command or "serge file" in command:
         return handle_file_search(command)
+
+    # 14. Web Search and Scraping (Obscura)
+    elif any(kw in command for kw in ("search the web", "search online", "search internet", "search the internet", "browse the web", "scrape website", "scrape url", "look up online", "look up on web")):
+        return handle_web_search(command)
         
     else: 
         logger.debug(f"Command '{command}' not matched by system actions.")
