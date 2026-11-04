@@ -20,11 +20,15 @@ def get_voice_module():
     global _ALFRED_VOICE_INSTANCE
     if _ALFRED_VOICE_INSTANCE is None:
         try:
-            from alfred_voice import AlfredVoiceModule
+            from FILES.alfred_voice import AlfredVoiceModule
             _ALFRED_VOICE_INSTANCE = AlfredVoiceModule(voice_name="peter_yearsley")
-        except ImportError as e:
-            logger.error(f"Failed to import alfred_voice from project root: {e}")
-            raise
+        except ImportError:
+            try:
+                from alfred_voice import AlfredVoiceModule
+                _ALFRED_VOICE_INSTANCE = AlfredVoiceModule(voice_name="peter_yearsley")
+            except ImportError as e:
+                logger.error(f"Failed to import alfred_voice: {e}")
+                raise
     return _ALFRED_VOICE_INSTANCE
 
 @track_latency("util_functions.is_online")

@@ -29,13 +29,70 @@ WEB_REGISTRY = {
     "gemini":          {"url": "https://gemini.google.com/app", "name": "Gemini"},
 }
 
-from FmWk.tools.system_tools import (
-    open_app as mcp_open_app,
-    close_app as mcp_close_app,
-    open_workspace as mcp_open_workspace,
-    close_workspace as mcp_close_workspace,
-    show_desktop as mcp_show_desktop,
-)
+try:
+    from MCP.tools.system_tools import (
+        open_app as mcp_open_app,
+        close_app as mcp_close_app,
+        open_workspace as mcp_open_workspace,
+        close_workspace as mcp_close_workspace,
+        show_desktop as mcp_show_desktop,
+    )
+    HAS_MCP_TOOLS = True
+except ImportError:
+    HAS_MCP_TOOLS = False
+    logger.info("MCP system tools unavailable. Using native OS fallback in app_launcher.")
+
+    def mcp_open_app(app_name: str, target: str = None) -> dict:
+        key = app_name.lower().strip()
+        if key in APP_REGISTRY:
+            os.system(APP_REGISTRY[key]["open"])
+            return {"status": f"Opened {APP_REGISTRY[key]['name']}"}
+        if key in WEB_REGISTRY:
+            webbrowser.open(WEB_REGISTRY[key]["url"])
+            return {"status": f"Opened {WEB_REGISTRY[key]['name']}"}
+        if key in ("task manager", "taskmanager"):
+            os.system("start taskmgr")
+            return {"status": "Opened Task Manager"}
+        if key in ("resource monitor", "resmon"):
+            os.system("start resmon")
+            return {"status": "Opened Resource Monitor"}
+        return {"status": f"Opening {app_name}"}
+
+    def mcp_close_app(app_name: str) -> dict:
+        key = app_name.lower().strip()
+        proc = None
+        if key in APP_REGISTRY:
+            proc = APP_REGISTRY[key]["process"]
+        elif key in ("task manager", "taskmanager"):
+            proc = "taskmgr.exe"
+        elif key in ("resource monitor", "resmon"):
+            proc = "resmon.exe"
+        elif key.endswith(".exe"):
+            proc = key
+        else:
+            proc = f"{key}.exe"
+
+        res = os.system(f"taskkill /f /im {proc} >nul 2>&1")
+        if res == 0:
+            return {"status": f"Closed {app_name}"}
+        return {"error": f"Failed to close {app_name} or process was not running."}
+
+    def mcp_open_workspace() -> dict:
+        os.system(f'start antigravity-ide.exe "{os.getcwd()}"')
+        os.system("start chrome")
+        return {"status": "Workspace opened successfully."}
+
+    def mcp_close_workspace() -> dict:
+        os.system("taskkill /f /im antigravity-ide.exe >nul 2>&1")
+        os.system("taskkill /f /im chrome.exe >nul 2>&1")
+        return {"status": "Workspace closed."}
+
+    def mcp_show_desktop() -> dict:
+        try:
+            keyboard.press_and_release("win+d")
+            return {"status": "Showing desktop."}
+        except Exception as e:
+            return {"error": f"Failed to show desktop: {e}"}
 
 @track_latency("commands.close_application_through_cmd")
 def close_application_through_cmd(process_name: str, return_response: str = None) -> str:

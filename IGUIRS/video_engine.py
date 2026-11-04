@@ -155,11 +155,13 @@ class VideoSelectorModal(tk.Toplevel):
     """
     HUD Dialog allowing user to select a video option by number or click.
     """
-    def __init__(self, master, query: str, options: list, on_selected):
+    def __init__(self, master, query: str, options: list, on_selected, default_index: int = None, auto_play_delay: float = 2.5):
         super().__init__(master)
         self.on_selected = on_selected
         self.options = options
         self.selected_index = None
+        self.default_index = default_index
+        self._auto_timer = None
 
         self.title("Select Video")
         self.configure(bg="#0f1115")
@@ -193,10 +195,15 @@ class VideoSelectorModal(tk.Toplevel):
         )
         title_lbl.pack(side=tk.LEFT)
 
+        if default_index is not None and 0 <= default_index < len(options):
+            sub_text = f"[Auto-playing #{default_index + 1} in {int(auto_play_delay)}s | 1-9 to Pick | Esc Cancel]"
+        else:
+            sub_text = "[Press 1-9 or Click | Esc to Cancel]"
+
         sub_lbl = tk.Label(
             header_frame,
-            text="[Press 1-9 or Click | Esc to Cancel]",
-            fg="#888888",
+            text=sub_text,
+            fg="#00ffcc" if default_index is not None else "#888888",
             bg="#1a1d24",
             font=("Segoe UI", 9)
         )
@@ -208,11 +215,13 @@ class VideoSelectorModal(tk.Toplevel):
 
         for i, opt in enumerate(options[:9]):
             idx = i + 1
+            is_default = (default_index is not None and i == default_index)
+            card_bg = "#1f2736" if is_default else "#161922"
             card = tk.Frame(
                 container,
-                bg="#161922",
-                bd=1,
-                relief=tk.FLAT,
+                bg=card_bg,
+                bd=2 if is_default else 1,
+                relief=tk.SOLID if is_default else tk.FLAT,
                 cursor="hand2",
                 padx=10,
                 pady=6
@@ -222,8 +231,8 @@ class VideoSelectorModal(tk.Toplevel):
             num_lbl = tk.Label(
                 card,
                 text=f"[{idx}]",
-                fg="#00ffcc",
-                bg="#161922",
+                fg="#ffcc00" if is_default else "#00ffcc",
+                bg=card_bg,
                 font=("Consolas", 11, "bold"),
                 width=4
             )
@@ -236,7 +245,7 @@ class VideoSelectorModal(tk.Toplevel):
                 card,
                 text=t_text,
                 fg="#ffffff",
-                bg="#161922",
+                bg=card_bg,
                 font=("Segoe UI", 10),
                 anchor="w"
             )
@@ -247,7 +256,7 @@ class VideoSelectorModal(tk.Toplevel):
                 card,
                 text=meta_text,
                 fg="#7e8590",
-                bg="#161922",
+                bg=card_bg,
                 font=("Segoe UI", 9)
             )
             meta_lbl.pack(side=tk.RIGHT)
@@ -262,6 +271,10 @@ class VideoSelectorModal(tk.Toplevel):
             self.bind(str(idx), lambda e, k=i: self._select(k))
 
         self.bind("<Escape>", lambda e: self._cancel())
+
+        if default_index is not None and 0 <= default_index < len(options):
+            self.bind("<Return>", lambda e: self._select(default_index))
+            self._auto_timer = self.after(int(auto_play_delay * 1000), lambda: self._select(default_index))
 
     def _start_drag(self, event):
         self._offset_x = event.x_root - self.winfo_x()
@@ -280,6 +293,12 @@ class VideoSelectorModal(tk.Toplevel):
             pass
 
     def _select(self, index):
+        if self._auto_timer:
+            try:
+                self.after_cancel(self._auto_timer)
+            except Exception:
+                pass
+            self._auto_timer = None
         self.selected_index = index
         logger.info(f"User selected video option [{index + 1}]: {self.options[index]['title']}")
         if self.on_selected:
@@ -287,6 +306,12 @@ class VideoSelectorModal(tk.Toplevel):
         self.destroy()
 
     def _cancel(self):
+        if self._auto_timer:
+            try:
+                self.after_cancel(self._auto_timer)
+            except Exception:
+                pass
+            self._auto_timer = None
         logger.info("Video option selection cancelled by user.")
         if self.on_selected:
             self.on_selected(None)

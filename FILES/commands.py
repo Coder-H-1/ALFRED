@@ -3,7 +3,7 @@ commands.py — Master command dispatcher for ALFRED.
 
 Refactored to be modular and scalable, delegating specific domain tasks
 to specialized modules in FILES/command_components/.
-Tool and system actions handled by Octopus MCP are routed via FmWk.
+Tool and system actions handled by Octopus MCP are routed via MCP.
 """
 from FILES.util_functions import multi_replace
 from FILES.logger import get_logger

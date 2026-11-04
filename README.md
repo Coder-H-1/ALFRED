@@ -31,8 +31,8 @@ The project runs entirely locally using GGUF-format models via `llama_cpp`, ensu
 9. **System Automation**: Native desktop control interfaces to adjust volume (via `pycaw`), screen brightness, open/close applications (Notepad, Command Prompt, Chrome, WhatsApp, IDEs), toggle system settings, restart, or shutdown.
 10. **Model Context Protocol (MCP) Intermediary Bridge**: Connects ALFRED to the Octopus MCP engine using a dedicated async daemon and synchronous facade, supporting fast-path keyword routing, local Qwen tool classification, and standard stdio external tools.
 11. **Real-time Resource Monitoring**: Integrated CPU/RAM stats collector for system status feedback and voice status responses.
-12. **Thread-Safe Daily Latency Profiling**: Automatically tracks execution latency across all core functions with high-precision sub-second tracking, daily file segregation, exit grouping by function, and summary metrics.
-13. **Native Log Compression & Archiving**: Custom binary compression (`.compressed_logs` with magic header `ALF1`, CRC32 validation, and zlib level 9 compression) for rotated daily logs and latency traces.
+12. **Content-Length Bucketed Latency Profiler & Graphical Stats**: Records exact Query-to-Response latency right before speech output. Tracks query and response character lengths side-by-side, grouping records into 5 content-length buckets (`1-100`, `101-250`, `251-500`, `501-1000`, `1001+` chars). Features moving average comparisons against the last 10 queries, terminal ASCII/Unicode visual charts, interactive Tkinter canvas plots (`--plot`), and automatic SVG dashboard exports (`stats.svg`).
+13. **Native Log Compression, Batch Archiving & Retrieval**: Custom binary compression (`.compressed_logs` with magic header `ALF1`, CRC32 validation, and zlib level 9 compression). Automatically bundles rotated logs and latency records older than 5–7 days in groups of 5 into structured zip archives (`from_DD_MM_YYYY_to_DD_MM_YYYY_*.zip`). Includes function-specific CLI log querying with automatic file exports and terminal previews.
 14. **Smart Audio Ducking**: Automatically detects external audio streams via `pycaw` and ducks volume by 85% during ALFRED speech playback, seamlessly restoring volume upon completion or voice interrupt.
 15. **Local Stealth Web Scraper & Knowledge Grounding (Obscura)**:
     - **Ultra-Lightweight Rust Engine**: Embeds [h4ckf0r0day/obscura](https://github.com/h4ckf0r0day/obscura), consuming only ~30–60 MB RAM (compared to 500 MB–1.5 GB for headless Chromium).
@@ -104,7 +104,7 @@ Project/
 │       ├── rest/         # Source frame sequence for rest state
 │       ├── thinking/     # Source frame sequence for thinking state
 │       └── work/         # Source frame sequence for work state
-├── FmWk/                 # Octopus Model Context Protocol (MCP) framework (external repo)
+├── MCP/                  # Octopus Model Context Protocol (MCP) framework (external repo)
 └── research/             # MCP deep research and tool development guides
 ```
 
@@ -261,30 +261,63 @@ python main.py
 
 ## System Logging & Latency Tracking
 
-### 1. Operations Logging
+### 1. Operations Logging & Function Retrieval (`FILES/log_compressor.py`)
 All application executions, requests, socket connections, and exceptions are logged to:
 - Console outputs
-- **`logs/alfred.log`** (Rotates daily, retains last 7 days of debug logs)
+- **`logs/alfred.log`** (Rotates daily, retains last 5 days of active/compressed logs)
 - Rotated logs are automatically compressed to `.compressed_logs` on shutdown via `FILES/log_compressor.py`.
+- Files older than 5 days are bundled into groups of 5 in batch zip archives: `from_DD_MM_YYYY_to_DD_MM_YYYY_alfred_log.zip`.
 
-### 2. Latency Profiler & CLI
-Latency is captured on a per-call basis via the `@track_latency` decorator and written to `logs/latency/YYYY-MM-DD.log`. On application shutdown (`atexit`), logs are automatically reorganized by function name, annotated with summary statistics, and compressed.
-
-Inspect latency metrics via the CLI:
+CLI commands:
 ```bash
-# Decompress and show first 50 lines of a specific date
-python .\FILES\LATENCY_RECORDER.py --show 2026-09-01
+# View last 50 lines of latest active log
+python .\FILES\log_compressor.py
 
-# Limit number of lines displayed
-python .\FILES\LATENCY_RECORDER.py --show 2026-09-01 --lines 20
+# Retrieve logs for a specific function/module (terminal preview)
+python .\FILES\log_compressor.py --function alfred_voice
 
-# Filter records and summaries for a specific function
-python .\FILES\LATENCY_RECORDER.py --show 2026-09-01 --function-name commands.process_command
+# Export all matching logs for a function to a file (creates directories automatically)
+python .\FILES\log_compressor.py --function web_search --output logs/exports/search_logs.txt
 
-# List all available recorded dates and archive sizes
+# Bundle >=5 files older than 5 days into zip archives
+python .\FILES\log_compressor.py --archive
+
+# Clean standalone logs older than 5 days
+python .\FILES\log_compressor.py --clean
+```
+
+### 2. Latency Profiler, Comparison & Graphical Visualization (`FILES/LATENCY_RECORDER.py`)
+Latency is captured strictly from user query arrival to response text readiness right before speaking, tracking both query and response lengths. Entries are grouped into 5 content-length buckets:
+- `1–100 chars`: Quick status, time/date, acknowledgments.
+- `101–250 chars`: Short conversational answers, quick memory recall.
+- `251–500 chars`: Standard assistant explanations.
+- `501–1000 chars`: Detailed answers and web summaries.
+- `1001+ chars`: Multi-paragraph content and deep web research.
+
+CLI commands:
+```bash
+# Show previous 10 queries, rolling average, and bucket comparative delta metrics
+python .\FILES\LATENCY_RECORDER.py --recent
+
+# Display ASCII distribution charts, bucket averages, and sparkline trends
+python .\FILES\LATENCY_RECORDER.py --stats
+
+# Open native Tkinter interactive canvas graph window
+python .\FILES\LATENCY_RECORDER.py --plot
+
+# Decompress and show records and summaries for a specific date
+python .\FILES\LATENCY_RECORDER.py --show 2026-10-30 --lines 20
+
+# Bundle >=5 latency logs older than 7 days into batch zip archives
+python .\FILES\LATENCY_RECORDER.py --archive
+
+# List all available recorded dates, compressed archives, and zip bundles
 python .\FILES\LATENCY_RECORDER.py --list
 
-# Clean up records older than 15 days
+# Migrate legacy format logs to new content-length grouped schema
+python .\FILES\LATENCY_RECORDER.py --migrate
+
+# Clean up standalone records older than retention period (15 days)
 python .\FILES\LATENCY_RECORDER.py --clean
 ```
 

@@ -1,16 +1,24 @@
 """
 `plugin_host.py` — Octopus MCP Intermediary Bridge Adapter for ALFRED
 
-Connects ALFRED's synchronous command loop to FmWk's Octopus MCP Bridge.
+Connects ALFRED's synchronous command loop to MCP's Octopus Bridge.
 Eliminates insecure raw socket code injection and integrates Strategy B tool execution.
+Provides safe fallback stubs when the MCP module/folder is absent.
 """
 
 from typing import Optional, Any, Dict
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
-from FmWk.bridge import get_bridge
 
 logger = get_logger(__name__)
+
+try:
+    from MCP.bridge import get_bridge
+    HAS_MCP = True
+except ImportError:
+    get_bridge = None
+    HAS_MCP = False
+    logger.info("MCP module not found or disabled. Standalone mode active.")
 
 
 def _format_tool_output(result: Any) -> str:
@@ -78,6 +86,10 @@ def start_plugin_listener():
     Initializes the Octopus MCP Intermediary Bridge daemon on ALFRED launch.
     Discovers all local native tools and configured stdio MCP servers.
     """
+    if not HAS_MCP or get_bridge is None:
+        logger.info("MCP folder not present. Running ALFRED in standalone core mode (no MCP tools).")
+        return
+
     logger.info("Initializing Octopus MCP Bridge for ALFRED...")
     try:
         bridge = get_bridge()
@@ -96,7 +108,7 @@ def match_dynamic_command(command: str) -> Optional[str]:
     3. If tool succeeds -> returns formatted result string.
     4. If no tool matches or tool fails -> returns None (cascades to ALFRED LLM).
     """
-    if not command:
+    if not command or not HAS_MCP or get_bridge is None:
         return None
 
     try:
@@ -121,8 +133,17 @@ def test_mcp_tools(query: Optional[str] = None, verbose: bool = True) -> Dict[st
     Test function for MCP tools.
     Measures startup time, tools found, query received, and tools output.
     """
+    if not HAS_MCP or get_bridge is None:
+        if verbose:
+            print("[MCP NOT FOUND] Standalone mode. No MCP tools registered.")
+        return {
+            "status": "mcp_not_found",
+            "tools_found": {"total_count": 0, "local_count": 0, "tool_names": []},
+            "program_outputs": {"status": "standalone_mode", "execution_time_ms": 0}
+        }
+
     import time
-    from FmWk.core.decorators import get_local_tools
+    from MCP.core.decorators import get_local_tools
 
     t0 = time.perf_counter()
     bridge = get_bridge()

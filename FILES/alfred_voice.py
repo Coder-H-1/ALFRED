@@ -91,6 +91,7 @@ class AlfredVoiceModule:
         self.ducker = AudioDucker(duck_percent=0.85)
         self._remaining_chunks = 0
         self._chunks_lock = threading.Lock()
+        self.on_speech_finished = None
         
         # Executor for simultaneous chunk generation
         self.executor = ThreadPoolExecutor(max_workers=4)
@@ -154,6 +155,11 @@ class AlfredVoiceModule:
         with self._chunks_lock:
             self._remaining_chunks = 0
         self.ducker.restore()
+        if callable(getattr(self, "on_speech_finished", None)):
+            try:
+                self.on_speech_finished()
+            except Exception:
+                pass
         gc.collect()
         self._interrupt_event.clear()
 
@@ -269,6 +275,11 @@ class AlfredVoiceModule:
                             self._remaining_chunks -= 1
                         if self._remaining_chunks == 0:
                             self.ducker.restore()
+                            if callable(getattr(self, "on_speech_finished", None)):
+                                try:
+                                    self.on_speech_finished()
+                                except Exception:
+                                    pass
                     continue
 
                 # Pad with 100ms silence at the start and 150ms at the end to prevent cutoffs
@@ -295,6 +306,11 @@ class AlfredVoiceModule:
                         self._remaining_chunks -= 1
                     if self._remaining_chunks == 0:
                         self.ducker.restore()
+                        if callable(getattr(self, "on_speech_finished", None)):
+                            try:
+                                self.on_speech_finished()
+                            except Exception:
+                                pass
                 self.playback_queue.task_done()
 
     def shutdown(self):

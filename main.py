@@ -1,74 +1,57 @@
-from FILES.utils import Responder, get_greeting, MEMORY
-from FILES.commands import process_command
-from FILES.util_functions import listen_command, speak, stop_speaking, is_speaking, wait_until_done_speaking
-from FILES.plugin_host import start_plugin_listener, match_dynamic_command
-from FILES.log_compressor import compress_all_rotated_logs
-from FILES.logger import get_logger
-from FILES.LATENCY_RECORDER import LatencyRecorder
-from FILES.gui_controller import launch_gui, set_gui_state, close_gui
-import os
-import sys
-import atexit
-import time
-import re
-import gc
-import random
-from collections import deque
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
+from FILES.startup import (
+    os,
+    sys,
+    time,
+    re,
+    gc,
+    deque,
+    version,
+    logger,
+    initialize_system,
+    set_gui_state,
+    close_gui,
+    listen_command,
+    speak,
+    stop_speaking,
+    is_speaking,
+    Responder,
+    MEMORY,
+    process_command,
+    match_dynamic_command,
+)
 
-import version
+COMMAND_INPUT = False  # False: listen audio command, True: console text input
 
-logger = get_logger(__name__)
 
 def filter_speech(text):
+    """Strip parenthesis and asterisks/emojis from speech output."""
     if not isinstance(text, str):
         text = str(text)
     text = re.sub(r'\(.*?\)', '', text)
     text = re.sub(r'\*.*?\*', '', text)
     return text.strip()
 
-COMMAND_INPUT = False  # False: listen audio command, True: console text input
-
 
 def Command() -> str:
+    """Acquires user command either from console input or speech audio."""
     if COMMAND_INPUT:
         try:
             cmd = input(f"[{version.PROJECT_NAME}] Enter command: ").strip()
             return cmd.lower() if cmd else None
         except (KeyboardInterrupt, EOFError):
             return "exit"
-    else: 
+    else:
         command = listen_command()
         return command
 
 
 def main():
     global COMMAND_INPUT
-    
-    logger.info(f"Starting {version.PROJECT_NAME}")
-    atexit.register(compress_all_rotated_logs)
-    atexit.register(close_gui)
 
-    # Launch GUI avatar in background
-    launch_gui()
-    set_gui_state("work")
-    
-    # Initialize latency recorder and log startup
-    latency = LatencyRecorder()
-    latency.startup_record()
-    
-    speak("System is now fully operational.")
-    os.system(f"title {version.PROJECT_NAME}")
-    os.system("cls")
-    
-    speak(get_greeting())
-    start_plugin_listener()
-    wait_until_done_speaking()
-    set_gui_state("rest")
+    # Execute all startup initializations, checks, and configurations
+    startup_data = initialize_system()
+    latency = startup_data["latency"]
+
     interrupted_speech = False
     message_queue = deque()
 
@@ -114,7 +97,7 @@ def main():
             COMMAND_INPUT = not COMMAND_INPUT
             logger.info(f"Switched COMMAND_INPUT mode to: {COMMAND_INPUT}")
             return
-        
+
         if any(kw in command_text for kw in ("restart yourself", "restart yourselves", "restart your self", "restart your")):
             logger.info("Restart command received. Restarting main.py process...")
             os.system("py -3.14 .\\main.py")
@@ -128,72 +111,89 @@ def main():
             speak(Responder("good day alfred. Now you may close yourself."))
             close_gui()
             sys.exit()
-            
+
         set_gui_state("thinking")
+        target_speech = None
+        memory_entry = None
+
         plugin_result = match_dynamic_command(command_text)
         if plugin_result:
             logger.info("Dynamic plugin matched successfully.")
-            plugin_result_clean = str(plugin_result).replace("[KEEP_UI]", "").strip()
-            clean_plugin_result = filter_speech(plugin_result_clean)
-            set_gui_state("work")
-            speak(clean_plugin_result)
-            MEMORY.add_to_history(command_text, plugin_result)
+            target_speech = filter_speech(str(plugin_result).replace("[KEEP_UI]", "").strip())
+            memory_entry = plugin_result
         else:
             system_action = process_command(command_text)
             if system_action:
                 logger.info("System action matched successfully.")
-                system_action_clean = str(system_action).replace("[KEEP_UI]", "").strip()
-                clean_system_action = filter_speech(system_action_clean)
-                set_gui_state("work")
-                speak(clean_system_action)
-                MEMORY.add_to_history(command_text, system_action)
+                target_speech = filter_speech(str(system_action).replace("[KEEP_UI]", "").strip())
+                memory_entry = system_action
             else:
                 logger.info("No system action matched. Falling back to default Responder...")
                 response = Responder(command_text)
-                clean_response = filter_speech(response)
-                set_gui_state("work")
-                speak(clean_response) 
-        
-        # Record latency for this command cycle
+                target_speech = filter_speech(response)
+                memory_entry = response
+
+        # Record query-to-response latency before speaking
         q_end = time.time()
+        q_len = len(command_text) if command_text else 0
+        resp_len = len(target_speech) if target_speech else 0
         latency.record(
-            source="main.command_loop",
-            query_length=len(command_text) if command_text else 0,
+            source="QUERY_RESPONSE",
+            query_length=q_len,
+            response_length=resp_len,
             query_received_at=q_start,
-            output_at=q_end
+            output_at=q_end,
         )
-        wait_until_done_speaking()
-        set_gui_state("rest")
+
+        # Now speak response
+        if target_speech:
+            set_gui_state("work")
+            speak(target_speech)
+            if memory_entry:
+                MEMORY.add_to_history(command_text, memory_entry)
 
     while True:
         try:
-            # If assistant is still speaking, wait until completed before listening
-            if is_speaking():
-                wait_until_done_speaking()
-                set_gui_state("rest")
+            # 0. Check background research / tool completions
+            try:
+                from MCP.tools.research_tools import pop_research_notification
+                bg_note = pop_research_notification()
+                if bg_note and not is_speaking():
+                    logger.info(f"Announcing completed background research: '{bg_note}'")
+                    set_gui_state("work")
+                    speak(bg_note)
+                    set_gui_state("rest")
+            except (ImportError, Exception):
+                pass
 
-            # If items in queue, process next queued item
-            if message_queue:
+            # 1. Process queued commands if assistant is idle
+            if message_queue and not is_speaking():
                 next_cmd = message_queue.popleft()
                 logger.info(f"Processing next query from queue ({len(message_queue)} remaining): '{next_cmd}'")
                 handle_query_execution(next_cmd)
                 continue
 
+            # 2. Check speaking state before listening
+            was_speaking = is_speaking()
+            if not was_speaking:
+                set_gui_state("listening")
+
             q_start = time.time()
-            set_gui_state("listening")
             command = Command()
-            if command is None: 
-                set_gui_state("rest")
+            if command is None:
+                if not is_speaking():
+                    set_gui_state("rest")
                 continue
 
             command = command.strip()
             if not command:
-                set_gui_state("rest")
+                if not is_speaking():
+                    set_gui_state("rest")
                 continue
 
             has_alfred = bool(re.match(r"^alfred\b", command, re.IGNORECASE))
 
-            # Case 1: Starts with 'alfred' -> highest priority!
+            # Case 1: Starts with 'alfred' -> highest priority! Interrupt ongoing speech!
             if has_alfred:
                 if message_queue:
                     logger.info(f"Flush message queue ({len(message_queue)} items) due to high-priority 'alfred' command.")
@@ -207,22 +207,24 @@ def main():
                 # Strip leading 'alfred' prefix
                 command = re.sub(r"^alfred\s*[,:]?\s*", "", command, flags=re.IGNORECASE).strip()
                 if not command:
+                    set_gui_state("rest")
                     continue
 
                 logger.info(f"High-priority query received: {command}")
                 handle_query_execution(command, q_start)
                 continue
 
-            # Case 2: Does not start with 'alfred' -> push to message queue
-            logger.info(f"Command does not start with 'alfred'. Adding to queue: '{command}'")
-            message_queue.append(command)
+            # Case 2: Does not start with 'alfred'
+            # If assistant is speaking right now, push to queue so we don't interrupt ongoing speech
+            if is_speaking():
+                logger.info(f"Assistant is speaking. Adding non-alfred command to queue: '{command}'")
+                message_queue.append(command)
+                continue
 
-            # If assistant is not speaking, immediately handle next item in queue
-            if not is_speaking():
-                next_cmd = message_queue.popleft()
-                logger.info(f"Proceeding immediately with queue query: '{next_cmd}'")
-                handle_query_execution(next_cmd, q_start)
-                
+            # If assistant is idle, process immediately
+            logger.info(f"Processing command: '{command}'")
+            handle_query_execution(command, q_start)
+
         except Exception as loop_error:
             logger.error(f"Error inside command handler loop: {loop_error}", exc_info=True)
 
@@ -233,7 +235,7 @@ if __name__ == "__main__":
 
     except Exception as error:
         import traceback
-        
+
         err_msg = traceback.format_exc()
         logger.critical(f"ALFRED crashed with error: {error}", exc_info=True)
         print("An error occurred:")

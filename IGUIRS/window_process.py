@@ -124,6 +124,24 @@ class IsolatedWindowRunner:
                 pass
             time.sleep(0.2)
 
+    def _parse_video_extra_args(self):
+        """Extracts show_list, target_index, and explicit_index from window extra-args."""
+        show_list = False
+        explicit_index = False
+        target_index = 1
+        for arg in self.current_extra_args:
+            if isinstance(arg, str):
+                if arg == "--show-list":
+                    show_list = True
+                elif arg == "--explicit-index":
+                    explicit_index = True
+                elif arg.startswith("--index="):
+                    try:
+                        target_index = int(arg.split("=")[1])
+                    except Exception:
+                        pass
+        return show_list, target_index, explicit_index
+
     def _start_window_pipeline(self):
         if self.win_type in ("video", "yt_video", "stream"):
             threading.Thread(target=self._resolve_video_options, daemon=True).start()
@@ -133,6 +151,7 @@ class IsolatedWindowRunner:
 
     def _resolve_video_options(self):
         try:
+            show_list, target_index, explicit_index = self._parse_video_extra_args()
             options = search_video_options(self.raw_data)
             if not options:
                 logger.warning(f"No video options found for '{self.raw_data}'. Exiting.")
@@ -142,13 +161,23 @@ class IsolatedWindowRunner:
             is_direct_url = any(domain in self.raw_data for domain in ("youtube.com/watch", "youtu.be/", "vimeo.com"))
             if len(options) == 1 and is_direct_url:
                 self._on_video_selected(options[0])
+                return
+
+            # Default to playing 1st in the list (or user-specified index) if show_list is False
+            if not show_list:
+                chosen_idx = max(0, min(target_index - 1, len(options) - 1))
+                logger.info(f"Auto-playing option #{chosen_idx + 1} of {len(options)} for '{self.raw_data}' without modal.")
+                self._on_video_selected(options[chosen_idx])
             else:
+                # If user asks to show list in query, display modal before playing
                 def show_modal():
+                    default_idx = (target_index - 1) if (explicit_index and 0 <= target_index - 1 < len(options)) else None
                     VideoSelectorModal(
                         self.root,
                         self.raw_data,
                         options,
-                        self._on_video_selected
+                        self._on_video_selected,
+                        default_index=default_idx
                     )
                 self.root.after(0, show_modal)
         except Exception as e:
