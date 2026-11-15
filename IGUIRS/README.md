@@ -138,7 +138,7 @@ When `size_reduce_percentage` changes:
 
 ## 5. ALFRED Integration
 
-ALFRED is wired directly into IGUIRS through [FILES/gui_controller.py](file:///c:/Users/VIBHA/Desktop/AI/FILES/gui_controller.py) inside [main.py](file:///c:/Users/VIBHA/Desktop/AI/main.py):
+ALFRED is wired directly into IGUIRS through `FILES/gui_controller.py` inside `main.py`:
 
 ```python
 from FILES.gui_controller import launch_gui, set_gui_state, close_gui

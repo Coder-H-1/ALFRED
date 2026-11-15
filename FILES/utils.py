@@ -13,7 +13,7 @@ Functions:
 Working:
     It creates an object called `MEMORY` -> Controls and recalls chat history
 
-    It creates another object called `LLM` -> load LLaMa model 
+    It creates another object called `LLM` -> load llm model 
                 :-> n_ctx       = 2048        (tokens input)
                 :-> max_token   = 100         (token output per prompt)
 """
@@ -76,15 +76,16 @@ def get_optimal_threads(reserve=2) -> int:
     return int(threads)
 
 def get_llm():
-    """Lazily initializes and returns the LLaMA model instance with TurboQuant 4-bit KV cache and 32k context."""
+    """Lazily initializes and returns the LLaMA model instance with TurboQuant 4-bit KV cache and full context for main Responder."""
     global _LLM_INSTANCE
     if _LLM_INSTANCE is None:
         _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         model_path = os.path.join(_BASE_DIR, "FILES", "model", "model.gguf")
-        logger.info(f"Initializing LLaMA model with TurboQuant KV Cache (32k context) from path: {model_path}")
+        logger.info(f"Initializing LLaMA model with TurboQuant KV Cache (full 32k context: 32000) from path: {model_path}")
         _LLM_INSTANCE = llama_cpp.Llama(
             model_path=model_path,
-            n_ctx=32768,
+            n_ctx=32000,
+            n_batch=1024,
             type_k=llama_cpp.GGML_TYPE_Q4_0,
             type_v=llama_cpp.GGML_TYPE_Q4_0,
             flash_attn=True,

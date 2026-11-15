@@ -278,8 +278,10 @@ class IguirsRenderer:
                     cfg = json.load(f)
                 if win_id in cfg:
                     del cfg[win_id]
-                    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+                    temp_path = CONFIG_PATH.with_suffix(".tmp")
+                    with open(temp_path, "w", encoding="utf-8") as f:
                         json.dump(cfg, f, indent=4)
+                    os.replace(temp_path, CONFIG_PATH)
                     dyn_logger.info(f"Cleaned up {win_id} from {CONFIG_PATH}")
         except Exception as e:
             dyn_logger.error(f"Error cleaning {win_id} from config: {e}")

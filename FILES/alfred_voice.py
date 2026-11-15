@@ -90,7 +90,7 @@ class AlfredVoiceModule:
         self._currently_playing = False
         self.ducker = AudioDucker(duck_percent=0.85)
         self._remaining_chunks = 0
-        self._chunks_lock = threading.Lock()
+        self._chunks_lock = threading.RLock()
         self.on_speech_finished = None
         
         # Executor for simultaneous chunk generation
@@ -270,16 +270,19 @@ class AlfredVoiceModule:
                 audio_array = future.result() 
                 
                 if self._interrupt_event.is_set() or audio_array is None:
+                    should_restore = False
                     with self._chunks_lock:
                         if self._remaining_chunks > 0:
                             self._remaining_chunks -= 1
                         if self._remaining_chunks == 0:
-                            self.ducker.restore()
-                            if callable(getattr(self, "on_speech_finished", None)):
-                                try:
-                                    self.on_speech_finished()
-                                except Exception:
-                                    pass
+                            should_restore = True
+                    if should_restore:
+                        self.ducker.restore()
+                        if callable(getattr(self, "on_speech_finished", None)):
+                            try:
+                                self.on_speech_finished()
+                            except Exception:
+                                pass
                     continue
 
                 # Pad with 100ms silence at the start and 150ms at the end to prevent cutoffs
@@ -301,16 +304,19 @@ class AlfredVoiceModule:
                  logger.error(f"Error during audio playback: {e}")
             finally:
                 self._currently_playing = False
+                should_restore = False
                 with self._chunks_lock:
                     if self._remaining_chunks > 0:
                         self._remaining_chunks -= 1
                     if self._remaining_chunks == 0:
-                        self.ducker.restore()
-                        if callable(getattr(self, "on_speech_finished", None)):
-                            try:
-                                self.on_speech_finished()
-                            except Exception:
-                                pass
+                        should_restore = True
+                if should_restore:
+                    self.ducker.restore()
+                    if callable(getattr(self, "on_speech_finished", None)):
+                        try:
+                            self.on_speech_finished()
+                        except Exception:
+                            pass
                 self.playback_queue.task_done()
 
     def shutdown(self):

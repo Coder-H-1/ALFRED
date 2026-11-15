@@ -80,7 +80,7 @@ def initialize_system():
 
     # When background voice synthesis finishes, automatically return GUI avatar to rest
     try:
-        get_voice_module().on_speech_finished = lambda: set_gui_state("rest")
+        get_voice_module().on_speech_finished = lambda: set_gui_state("rest", force=True)
     except Exception as e:
         logger.warning(f"Could not bind on_speech_finished: {e}")
 

@@ -74,18 +74,21 @@ class IsolatedWindowRunner:
         # Start setup workflow
         self.root.after(0, self._start_window_pipeline)
 
-    def _read_config(self) -> dict:
+    def _read_config(self):
         if not CONFIG_PATH.exists():
-            return {}
+            return None
         try:
             with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
+                content = f.read().strip()
+                if not content:
+                    return None
+                return json.loads(content)
         except Exception:
-            return {}
+            return None
 
     def _read_window_data(self) -> dict:
         cfg = self._read_config()
-        return cfg.get(self.window_id)
+        return cfg.get(self.window_id) if isinstance(cfg, dict) else None
 
     def _cleanup_config(self):
         try:
@@ -94,14 +97,17 @@ class IsolatedWindowRunner:
                     cfg = json.load(f)
                 if self.window_id in cfg:
                     del cfg[self.window_id]
-                    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+                    temp_path = CONFIG_PATH.with_suffix(".tmp")
+                    with open(temp_path, "w", encoding="utf-8") as f:
                         json.dump(cfg, f, indent=4)
+                    os.replace(temp_path, CONFIG_PATH)
                     logger.info(f"Cleaned up '{self.window_id}' from config.")
         except Exception as e:
             logger.error(f"Error cleaning {self.window_id} from config: {e}")
 
     def _watch_config_loop(self):
         last_mtime = None
+        missing_count = 0
         while self.running:
             try:
                 if CONFIG_PATH.exists():
@@ -109,17 +115,24 @@ class IsolatedWindowRunner:
                     if mtime != last_mtime:
                         last_mtime = mtime
                         cfg = self._read_config()
-                        if self.window_id not in cfg:
-                            logger.info(f"Window '{self.window_id}' removed from config. Closing process.")
-                            self.root.after(0, self._shutdown)
-                            break
+                        if cfg is None:
+                            time.sleep(0.1)
+                            continue
 
-                        # Check for dimension or argument changes
-                        new_extra_args = cfg[self.window_id].get("extra-args", [])
-                        if new_extra_args != self.current_extra_args:
-                            self.current_extra_args = new_extra_args
-                            if self.player_window:
-                                self.root.after(0, self.player_window.update_config_args, new_extra_args)
+                        if self.window_id not in cfg:
+                            missing_count += 1
+                            if missing_count >= 3:
+                                logger.info(f"Window '{self.window_id}' confirmed removed from config. Closing process.")
+                                self.root.after(0, self._shutdown)
+                                break
+                        else:
+                            missing_count = 0
+                            # Check for dimension or argument changes
+                            new_extra_args = cfg[self.window_id].get("extra-args", [])
+                            if new_extra_args != self.current_extra_args:
+                                self.current_extra_args = new_extra_args
+                                if self.player_window:
+                                    self.root.after(0, self.player_window.update_config_args, new_extra_args)
             except Exception:
                 pass
             time.sleep(0.2)

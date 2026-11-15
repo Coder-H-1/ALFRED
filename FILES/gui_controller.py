@@ -60,25 +60,28 @@ def get_current_config() -> dict:
 
 def save_config(cfg: dict) -> bool:
     try:
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        temp_path = CONFIG_PATH.with_suffix(".tmp")
+        with open(temp_path, "w", encoding="utf-8") as f:
             json.dump(cfg, f, indent=4)
+        os.replace(temp_path, CONFIG_PATH)
         return True
     except Exception as e:
         logger.error(f"Error writing config to {CONFIG_PATH}: {e}")
         return False
 
-def set_gui_state(state: str, fps: int = None, size_reduce_pct: float = None):
+def set_gui_state(state: str, fps: int = None, size_reduce_pct: float = None, force: bool = False):
     """
     Update IGUIRS avatar main state via config.json.
-    Guarded so state transitions do not interrupt or break active speech.
+    Guarded so state transitions do not interrupt or break active speech unless force=True.
     """
-    try:
-        from FILES.util_functions import is_speaking
-        if is_speaking() and state in ("rest", "listening", "thinking"):
-            logger.debug(f"Speech is actively playing; deferring state transition to '{state}'.")
-            return
-    except Exception:
-        pass
+    if not force:
+        try:
+            from FILES.util_functions import is_speaking
+            if is_speaking() and state in ("rest", "listening", "thinking"):
+                logger.debug(f"Speech is actively playing; deferring state transition to '{state}'.")
+                return
+        except Exception:
+            pass
 
     cfg = get_current_config()
     if "main" not in cfg:
@@ -138,18 +141,57 @@ def update_window_args(win_id: str, extra_args: list):
         logger.info(f"Updated dynamic window {win_id} extra-args={extra_args}")
         save_config(cfg)
 
+def get_python_executable() -> str:
+    """Finds Python interpreter with required multimedia libraries without hardcoding paths."""
+    try:
+        import yt_dlp
+        return sys.executable
+    except ImportError:
+        pass
+
+    import shutil
+    py_launcher = shutil.which("py")
+    if py_launcher:
+        for ver in ("-3.14", "-3.12", "-3"):
+            try:
+                res = subprocess.run(
+                    [py_launcher, ver, "-c", "import yt_dlp, sys; print(sys.executable)"],
+                    capture_output=True, text=True, timeout=3
+                )
+                cand = res.stdout.strip()
+                if cand and os.path.isfile(cand):
+                    return cand
+            except Exception:
+                pass
+    return sys.executable
+
+
 def launch_gui(autostart: bool = True):
     """Launch the Python Tkinter IGUIRS player if not already running."""
     global _GUI_PROCESS
     if _GUI_PROCESS is not None and _GUI_PROCESS.poll() is None:
         return _GUI_PROCESS
 
+    # Check if renderer.py is already running as a system process
+    try:
+        import psutil
+        for p in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                cmd = " ".join(p.info.get('cmdline') or [])
+                if "renderer.py" in cmd:
+                    logger.debug(f"IGUIRS renderer already running (PID {p.pid}).")
+                    return p
+            except Exception:
+                pass
+    except Exception:
+        pass
+
     if not GUI_SCRIPT.exists():
         logger.error(f"Renderer script not found at {GUI_SCRIPT}")
         return None
 
     try:
-        py_exec = sys.executable
+        py_exec = get_python_executable()
         logger.info(f"Launching IGUIRS renderer subprocess: {py_exec} {GUI_SCRIPT}")
         _GUI_PROCESS = subprocess.Popen(
             [py_exec, str(GUI_SCRIPT)],

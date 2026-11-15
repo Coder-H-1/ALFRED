@@ -20,7 +20,7 @@ from FILES.startup import (
     match_dynamic_command,
 )
 
-COMMAND_INPUT = False  # False: listen audio command, True: console text input
+COMMAND_INPUT = True  # False: listen audio command, True: console text input
 
 
 def filter_speech(text):

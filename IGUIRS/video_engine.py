@@ -106,39 +106,60 @@ def search_video_options(query_or_url: str, max_results: int = 5) -> list:
 
 def resolve_stream_source(video_url: str, max_height: int = 480) -> dict:
     """
-    Extract direct stream buffer URL and metadata.
-    Prioritizes low-resolution video (<=480p) to eliminate frame lag and minimize buffer overhead.
+    Extract direct stream buffer URL and metadata in a single fast pass.
+    Prioritizes low-resolution video (<=480p/720p) to eliminate frame lag and minimize buffer overhead.
     """
     import yt_dlp
 
     logger.info(f"Extracting low-latency stream URL (target max {max_height}p) for: {video_url}")
     ydl_opts = {
-        "format": f"bestvideo[height<={max_height}][ext=mp4]/bestvideo[height<={max_height}]/bestvideo[height<=720]/best[height<={max_height}]/best/worst",
         "quiet": True,
         "no_warnings": True,
+        "skip_download": True
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(video_url, download=False)
-        stream_url = info.get("url")
-        fps = info.get("fps") or 30
-        width = info.get("width") or 800
-        height = info.get("height") or 600
-        title = info.get("title", "Video")
 
-    # Extract audio stream
+    title = info.get("title", "Video")
+    fps = info.get("fps") or 30
+    width = info.get("width") or 800
+    height = info.get("height") or 600
+
+    formats = info.get("formats", [])
+    stream_url = None
     audio_url = None
-    try:
-        audio_opts = {
-            "format": "ba[ext=m4a]/bestaudio[ext=m4a]/ba/best",
-            "quiet": True,
-            "no_warnings": True,
-        }
-        with yt_dlp.YoutubeDL(audio_opts) as a_ydl:
-            a_info = a_ydl.extract_info(video_url, download=False)
-            audio_url = a_info.get("url")
-            logger.info(f"Audio stream extracted: format={a_info.get('format_id')}, acodec={a_info.get('acodec')}")
-    except Exception as e:
-        logger.warning(f"Audio extraction fallback: {e}")
+
+    if formats:
+        # Separate video streams with height <= 720
+        v_candidates = [
+            f for f in formats
+            if f.get("url") and f.get("vcodec") not in (None, "none") and (f.get("height") or 0) <= 720
+        ]
+        # Target closest to max_height (480p)
+        if v_candidates:
+            v_under_max = [f for f in v_candidates if (f.get("height") or 0) <= max_height]
+            chosen_v = max(v_under_max, key=lambda f: (f.get("height") or 0)) if v_under_max else v_candidates[0]
+            stream_url = chosen_v.get("url")
+            fps = chosen_v.get("fps") or fps
+            width = chosen_v.get("width") or width
+            height = chosen_v.get("height") or height
+
+        # Audio streams
+        a_candidates = [
+            f for f in formats
+            if f.get("url") and f.get("acodec") not in (None, "none") and f.get("vcodec") in (None, "none")
+        ]
+        if a_candidates:
+            # Prefer m4a or highest abr
+            m4a_candidates = [f for f in a_candidates if f.get("ext") == "m4a"]
+            chosen_a = max(m4a_candidates or a_candidates, key=lambda f: (f.get("abr") or 0))
+            audio_url = chosen_a.get("url")
+
+    # Fallback to default direct stream if either missing
+    if not stream_url:
+        stream_url = info.get("url")
+    if not audio_url:
+        audio_url = info.get("url")
 
     logger.info(f"Stream resolved: title='{title}', fps={fps}, resolution={width}x{height}, has_audio={audio_url is not None}")
     return {
@@ -378,8 +399,9 @@ class DynamicVideoWindow(tk.Toplevel):
         self.rendered_frame_idx = 0
 
         # Threaded frame buffer
-        self.frame_queue = queue.Queue(maxsize=30)
+        self.frame_queue = queue.Queue(maxsize=120)
         self.buffer_thread = None
+        self.video_proc = None
 
         # Threaded audio stream
         self.audio_thread = None
@@ -556,33 +578,112 @@ class DynamicVideoWindow(tk.Toplevel):
 
     def _stream_capture_loop(self, stream_url: str):
         player_logger.info(f"Opening video buffer stream for {self.window_id}...")
-        self.cap = cv2.VideoCapture(stream_url)
-        if not self.cap.isOpened():
-            player_logger.error(f"Failed to open video capture stream for {self.window_id}")
-            self.after(0, self.close_window)
-            return
+        use_ffmpeg = False
+        try:
+            import imageio_ffmpeg
+            ffmpeg_bin = imageio_ffmpeg.get_ffmpeg_exe()
+            frame_size = self.target_w * self.target_h * 3
+            cmd = [
+                ffmpeg_bin,
+                "-reconnect", "1",
+                "-reconnect_streamed", "1",
+                "-reconnect_delay_max", "5",
+                "-loglevel", "quiet",
+                "-i", stream_url,
+                "-f", "rawvideo",
+                "-pix_fmt", "bgr24",
+                "-s", f"{self.target_w}x{self.target_h}",
+                "-"
+            ]
+            self.video_proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                bufsize=frame_size * 10
+            )
+            use_ffmpeg = True
+            player_logger.info(f"Video stream opened with FFmpeg auto-reconnect engine ({self.target_w}x{self.target_h}).")
+        except Exception as e:
+            player_logger.warning(f"FFmpeg video stream initialization failed: {e}. Falling back to OpenCV.")
+            use_ffmpeg = False
 
-        player_logger.info(f"Stream opened successfully for {self.window_id}. Buffering frames...")
-        while self.running:
-            ret, frame = self.cap.read()
-            if not ret or frame is None:
-                player_logger.info(f"End of stream reached for {self.window_id}.")
-                break
-            
-            # Put into queue (blocking if full to prevent RAM runaway)
-            while self.running:
-                try:
-                    self.frame_queue.put(frame, timeout=0.2)
+        if use_ffmpeg and self.video_proc:
+            import numpy as np
+            frame_size = self.target_w * self.target_h * 3
+            consecutive_misses = 0
+            while self.running and self.video_proc:
+                raw = self.video_proc.stdout.read(frame_size)
+                if not raw or len(raw) < frame_size:
+                    # Check if audio is still playing
+                    if hasattr(self, 'audio_proc') and self.audio_proc and hasattr(self, 'audio_thread') and self.audio_thread and self.audio_thread.is_alive():
+                        time.sleep(0.05)
+                        consecutive_misses += 1
+                        if consecutive_misses < 40:
+                            continue
+                    player_logger.info(f"Video stream reached end of buffer for {self.window_id}.")
                     break
-                except queue.Full:
-                    continue
+
+                consecutive_misses = 0
+                frame = np.frombuffer(raw, dtype=np.uint8).reshape((self.target_h, self.target_w, 3))
+
+                while self.running:
+                    try:
+                        self.frame_queue.put(frame, timeout=0.2)
+                        break
+                    except queue.Full:
+                        continue
+        else:
+            self.cap = cv2.VideoCapture(stream_url)
+            if not self.cap.isOpened():
+                player_logger.error(f"Failed to open video capture stream for {self.window_id}")
+                self.after(0, self.close_window)
+                return
+
+            player_logger.info(f"Stream opened successfully with OpenCV for {self.window_id}. Buffering frames...")
+            miss_count = 0
+            while self.running:
+                ret, frame = self.cap.read()
+                if not ret or frame is None:
+                    if hasattr(self, 'audio_proc') and self.audio_proc and hasattr(self, 'audio_thread') and self.audio_thread and self.audio_thread.is_alive():
+                        miss_count += 1
+                        if miss_count < 40:
+                            time.sleep(0.05)
+                            continue
+                    player_logger.info(f"End of stream reached for {self.window_id}.")
+                    break
+
+                miss_count = 0
+                while self.running:
+                    try:
+                        self.frame_queue.put(frame, timeout=0.2)
+                        break
+                    except queue.Full:
+                        continue
+
+        if hasattr(self, 'video_proc') and self.video_proc:
+            try:
+                self.video_proc.kill()
+            except Exception:
+                pass
+            self.video_proc = None
 
         if self.cap:
-            self.cap.release()
+            try:
+                self.cap.release()
+            except Exception:
+                pass
             self.cap = None
 
+        # Do NOT terminate early while audio is actively playing or frames remain queued
+        while self.running:
+            audio_alive = hasattr(self, 'audio_thread') and self.audio_thread and self.audio_thread.is_alive()
+            queue_has_frames = not self.frame_queue.empty()
+            if not audio_alive and not queue_has_frames:
+                break
+            time.sleep(0.1)
+
         if self.running:
-            # Signal playback end
+            player_logger.info(f"Full playback finished for {self.window_id}. Closing window.")
             self.after(50, self.close_window)
 
     def _render_loop(self):
@@ -594,7 +695,7 @@ class DynamicVideoWindow(tk.Toplevel):
             target_idx = int(elapsed * self.fps)
 
             latest_frame = None
-            # Catch up video frame index to the exact audio time
+            # Catch up video frame index to the exact audio time smoothly
             while self.rendered_frame_idx <= target_idx:
                 try:
                     latest_frame = self.frame_queue.get_nowait()
@@ -602,9 +703,12 @@ class DynamicVideoWindow(tk.Toplevel):
                 except queue.Empty:
                     break
 
+            # Resync clock if desync exceeds 15 frames to prevent bursting
+            if target_idx - self.rendered_frame_idx > 15:
+                self.audio_start_time = time.perf_counter() - (self.rendered_frame_idx / self.fps)
+
             if latest_frame is not None:
                 try:
-                    # Fast OpenCV hardware-accelerated resize (<1ms)
                     h, w = latest_frame.shape[:2]
                     if w != self.target_w or h != self.target_h:
                         latest_frame = cv2.resize(latest_frame, (self.target_w, self.target_h), interpolation=cv2.INTER_LINEAR)
@@ -630,6 +734,14 @@ class DynamicVideoWindow(tk.Toplevel):
 
         proc = psutil.Process(os.getpid())
         ram_before = proc.memory_info().rss / (1024 * 1024)
+
+        # Cleanup video stream handle
+        if hasattr(self, 'video_proc') and self.video_proc:
+            try:
+                self.video_proc.kill()
+            except Exception:
+                pass
+            self.video_proc = None
 
         # Cleanup audio resources
         self._cleanup_audio()

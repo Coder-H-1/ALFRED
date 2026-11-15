@@ -331,6 +331,15 @@ python .\FILES\LATENCY_RECORDER.py --clean
 
 ---
 
+## 🚀 Recent Improvements & Updates
+
+- **Audio Playback Concurrency & Anti-Deadlock**: Upgraded voice chunk synchronization to reentrant locks (`RLock`) and decoupled speech-finished callbacks and audio ducker volume restoration from internal playback locks, eliminating race condition freezes during voice interruptions.
+- **Atomic Configuration Persistence**: Implemented atomic file updates (`.tmp` write followed by `os.replace`) across `gui_controller.py`, `renderer.py`, and `window_process.py`, preventing state corruption or partial reads under high-frequency GUI events.
+- **Optimized Low-Latency Video Pipeline**: Streamlined `video_engine.py` format resolution into a single fast pass for audio and video feeds, piped FFmpeg rawvideo frames directly into OpenCV/NumPy memory buffers, and added dynamic clock resynchronization against PyAudio timestamps.
+- **LLM Context & Batch Throughput Optimization**: Expanded model context to 32,000 tokens with batched inference (`n_batch=1024`) and TurboQuant KV cache quantization for larger document synthesis without degradation.
+
+---
+
 ## ⚖️ Third-Party Notices, Trademarks & Legal Disclaimers
 
 This project incorporates and interfaces with open-source software, standards, and third-party services. All product names, logos, brands, and trademarks are the property of their respective owners.
