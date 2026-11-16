@@ -2,6 +2,7 @@ from FILES.long_term_memory import LongTermMemory
 from FILES.utils import clear_Memory
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
+from FILES.security import security_manager
 
 logger = get_logger(__name__)
 LTM = LongTermMemory()
@@ -37,9 +38,11 @@ def handle_repeat_answer(command: str) -> str:
 
 @track_latency("commands.process_command.clear_memory")
 def handle_clear_memory(command: str) -> str:
-    logger.info("Clearing memory history")
-    clear_Memory()
-    return "Cleared Memory at your command"
+    def _execute_clear():
+        logger.info("Confirmed clearing memory history executing")
+        clear_Memory()
+        return "Cleared Memory at your command, sir."
+    return security_manager.request_confirmation("Clear Memory", _execute_clear, command)
 
 @track_latency("commands.process_command.search_memory")
 def handle_search_memory(command: str) -> str:

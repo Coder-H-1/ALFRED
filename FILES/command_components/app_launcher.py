@@ -4,6 +4,7 @@ import keyboard
 from FILES.util_functions import search_files
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
+from FILES.security import security_manager
 
 logger = get_logger(__name__)
 
@@ -42,8 +43,15 @@ except ImportError:
     HAS_MCP_TOOLS = False
     logger.info("MCP system tools unavailable. Using native OS fallback in app_launcher.")
 
+    PROTECTED_PROCESSES = {
+        "explorer.exe", "lsass.exe", "csrss.exe", "smss.exe", "services.exe",
+        "svchost.exe", "wininit.exe", "winlogon.exe", "system", "idle"
+    }
+
     def mcp_open_app(app_name: str, target: str = None) -> dict:
         key = app_name.lower().strip()
+        if any(char in key for char in (";", "&", "|", "<", ">", "`", "%")):
+            return {"error": "Invalid characters in application name."}
         if key in APP_REGISTRY:
             os.system(APP_REGISTRY[key]["open"])
             return {"status": f"Opened {APP_REGISTRY[key]['name']}"}
@@ -71,6 +79,9 @@ except ImportError:
             proc = key
         else:
             proc = f"{key}.exe"
+
+        if proc.lower() in PROTECTED_PROCESSES:
+            return {"error": f"Refusing to terminate critical system process '{proc}'."}
 
         res = os.system(f"taskkill /f /im {proc} >nul 2>&1")
         if res == 0:
@@ -174,13 +185,18 @@ def handle_system_settings(command: str) -> str:
 @track_latency("commands.process_command.power_control")
 def handle_power_control(command: str) -> str:
     if any(kw in command for kw in ("shutdown computer", "shut down computer", "shut down the computer", "shutdown system", "shutdown the system", "shutdown pc", "shut down pc", "turn off computer", "turn off the computer", "turn off pc", "power off computer", "power off pc")):
-        logger.warning("System shutdown triggered!")
-        os.system("shutdown /s /f /t 5")
-        return "Shutting down the system now, sir."
+        def _execute_shutdown():
+            logger.warning("Confirmed system shutdown executing!")
+            os.system("shutdown /s /f /t 5")
+            return "Shutting down the system now, sir."
+        return security_manager.request_confirmation("System Shutdown", _execute_shutdown, command)
+
     elif any(kw in command for kw in ("restart computer", "restart the computer", "restart system", "restart the system", "restart pc", "reboot computer", "reboot pc", "reboot the system", "reboot system")):
-        logger.warning("System restart triggered!")
-        os.system("shutdown /r /f /t 5")
-        return "Restarting your machine now, sir."
+        def _execute_restart():
+            logger.warning("Confirmed system restart executing!")
+            os.system("shutdown /r /f /t 5")
+            return "Restarting your machine now, sir."
+        return security_manager.request_confirmation("System Restart", _execute_restart, command)
     return None
 
 @track_latency("commands.process_command.file_search")

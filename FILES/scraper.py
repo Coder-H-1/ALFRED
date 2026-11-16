@@ -15,6 +15,7 @@ import urllib.parse
 import subprocess
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
+from FILES.security import sanitize_prompt_context
 
 logger = get_logger(__name__)
 
@@ -38,6 +39,7 @@ def refine_markdown(content: str, max_words: int = MAX_WORDS_CAP) -> str:
     """
     Refines raw scraped markdown:
     - Strips consecutive empty lines and noise.
+    - Sanitizes against prompt injection payloads.
     - Limits word count to 5000-7000 words to respect LLaMA context budget.
     """
     if not content:
@@ -45,6 +47,9 @@ def refine_markdown(content: str, max_words: int = MAX_WORDS_CAP) -> str:
 
     # Remove excessive blank lines
     cleaned = re.sub(r'\n{3,}', '\n\n', content).strip()
+
+    # Sanitize prompt injection attempts
+    cleaned = sanitize_prompt_context(cleaned)
 
     # Cap to max words
     words = cleaned.split()

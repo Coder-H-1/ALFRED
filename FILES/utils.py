@@ -22,7 +22,10 @@ import os
 import datetime
 import random
 import re
-import llama_cpp
+try:
+    import llama_cpp
+except ImportError:
+    llama_cpp = None
 from FILES.memory import MEMORY
 from FILES.util_functions import multi_replace
 from FILES.logger import get_logger
@@ -78,6 +81,8 @@ def get_optimal_threads(reserve=2) -> int:
 def get_llm():
     """Lazily initializes and returns the LLaMA model instance with TurboQuant 4-bit KV cache and full context for main Responder."""
     global _LLM_INSTANCE
+    if llama_cpp is None:
+        raise ImportError("llama_cpp library not available in Python environment.")
     if _LLM_INSTANCE is None:
         _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         model_path = os.path.join(_BASE_DIR, "FILES", "model", "model.gguf")

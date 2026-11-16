@@ -25,20 +25,25 @@ The project runs entirely locally using GGUF-format models via `llama_cpp`, ensu
    - **Process-Isolated Dynamic Windows**: Dynamic secondary windows run in fully isolated child OS processes (`IGUIRS/window_process.py`), preventing secondary window crashes, Tkinter Tcl apartment deadlocks, or video decoding segfaults from affecting the main HUD avatar.
    - **Dynamic Video Engine & Player**: Integrated yt-dlp search with multi-option interactive selector dialog (`VideoSelectorModal`), background stream resolution, frameless 800x600 video window (`DynamicVideoWindow`) locked to audio clock via PyAudio and FFmpeg subprocess, OpenCV-accelerated frame rendering, and automatic garbage collection on stream termination.
    - **Programmatic Controller**: Clean programmatic API (`FILES/gui_controller.py`) for state switching, dynamic window spawning, and config-only resizing.
-6. **TurboQuant Vector Quantization Engine**: High-performance vector quantization and codebook operations accelerated via compiled Cython C-extensions (`FILES/turbo_ops.pyx` / `.pyd`).
-7. **Enhanced App & Web Launcher**: Space-agnostic registry matching (`$ task manager` / `$taskmanager`) with expanded direct web endpoints including Gemini (`$gemini`), ChatGPT, StackOverflow, Google, and YouTube Music.
-8. **Persistent Memory System**: Combines short-term RAM caching of conversation context with a long-term SQLite database using FTS5 (Full-Text Search) and automatic tagging to recall, search, or forget past conversations.
-9. **System Automation**: Native desktop control interfaces to adjust volume (via `pycaw`), screen brightness, open/close applications (Notepad, Command Prompt, Chrome, WhatsApp, IDEs), toggle system settings, restart, or shutdown.
-10. **Model Context Protocol (MCP) Intermediary Bridge**: Connects ALFRED to the Octopus MCP engine using a dedicated async daemon and synchronous facade, supporting fast-path keyword routing, local Qwen tool classification, and standard stdio external tools.
-11. **Real-time Resource Monitoring**: Integrated CPU/RAM stats collector for system status feedback and voice status responses.
-12. **Content-Length Bucketed Latency Profiler & Graphical Stats**: Records exact Query-to-Response latency right before speech output. Tracks query and response character lengths side-by-side, grouping records into 5 content-length buckets (`1-100`, `101-250`, `251-500`, `501-1000`, `1001+` chars). Features moving average comparisons against the last 10 queries, terminal ASCII/Unicode visual charts, interactive Tkinter canvas plots (`--plot`), and automatic SVG dashboard exports (`stats.svg`).
-13. **Native Log Compression, Batch Archiving & Retrieval**: Custom binary compression (`.compressed_logs` with magic header `ALF1`, CRC32 validation, and zlib level 9 compression). Automatically bundles rotated logs and latency records older than 5–7 days in groups of 5 into structured zip archives (`from_DD_MM_YYYY_to_DD_MM_YYYY_*.zip`). Includes function-specific CLI log querying with automatic file exports and terminal previews.
-14. **Smart Audio Ducking**: Automatically detects external audio streams via `pycaw` and ducks volume by 85% during ALFRED speech playback, seamlessly restoring volume upon completion or voice interrupt.
-15. **Local Stealth Web Scraper & Knowledge Grounding (Obscura)**:
+6. **TurboQuant Vector Quantization Engine**: High-performance vector quantization and codebook operations accelerated via compiled Cython C-extensions (`FILES/turbo_ops.pyx` / `.pyd`). Delivers 8.0x vector compression with >20dB SNR. Complete mathematical formulation and empirical benchmarks documented in [docs/turbo_quant.md](docs/turbo_quant.md).
+7. **Two-Tier Command Security & Safeguard Architecture**: 
+   - **Level 0 (Normal)**: Safe read-only tasks, media playback, app launches, and system status queries execute seamlessly.
+   - **Level 1 (Elevated / Destructive)**: High-risk system actions (Windows shutdown, restart, process termination, memory purges) require explicit confirmation within a strict **5-second timeout window**; unconfirmed operations auto-abort safely.
+   - **Prompt Injection & Data Sanitization**: External scraped content is cleansed and encapsulated within untrusted boundaries before prompt insertion. Sensitive credentials and API tokens are automatically redacted (`[REDACTED]`) from logs.
+8. **Enhanced App & Web Launcher**: Space-agnostic registry matching (`$ task manager` / `$taskmanager`) with expanded direct web endpoints including Gemini (`$gemini`), ChatGPT, StackOverflow, Google, and YouTube Music.
+9. **Persistent Memory System**: Combines short-term RAM caching of conversation context with a long-term SQLite database using FTS5 (Full-Text Search) and automatic tagging to recall, search, or forget past conversations.
+10. **System Automation**: Native desktop control interfaces to adjust volume (via `pycaw`), screen brightness, open/close applications (Notepad, Command Prompt, Chrome, WhatsApp, IDEs), toggle system settings, restart, or shutdown.
+11. **Model Context Protocol (MCP) Intermediary Bridge**: Connects ALFRED to the Octopus MCP engine using a dedicated async daemon and synchronous facade, supporting fast-path keyword routing, local Qwen tool classification, and standard stdio external tools.
+12. **Real-time Resource Monitoring**: Integrated CPU/RAM stats collector for system status feedback and voice status responses.
+13. **Content-Length Bucketed Latency Profiler & Graphical Stats**: Records exact Query-to-Response latency right before speech output. Tracks query and response character lengths side-by-side, grouping records into 5 content-length buckets (`1-100`, `101-250`, `251-500`, `501-1000`, `1001+` chars). Features moving average comparisons against the last 10 queries, terminal ASCII/Unicode visual charts, interactive Tkinter canvas plots (`--plot`), and automatic SVG dashboard exports (`stats.svg`).
+14. **Native Log Compression, Batch Archiving & Retrieval**: Custom binary compression (`.compressed_logs` with magic header `ALF1`, CRC32 validation, and zlib level 9 compression). Automatically bundles rotated logs and latency records older than 5–7 days in groups of 5 into structured zip archives (`from_DD_MM_YYYY_to_DD_MM_YYYY_*.zip`). Includes function-specific CLI log querying with automatic file exports and terminal previews.
+15. **Smart Audio Ducking**: Automatically detects external audio streams via `pycaw` and ducks volume by 85% during ALFRED speech playback, seamlessly restoring volume upon completion or voice interrupt.
+16. **Local Stealth Web Scraper & Knowledge Grounding (Obscura)**:
     - **Ultra-Lightweight Rust Engine**: Embeds [h4ckf0r0day/obscura](https://github.com/h4ckf0r0day/obscura), consuming only ~30–60 MB RAM (compared to 500 MB–1.5 GB for headless Chromium).
     - **V8 JavaScript Execution & Stealth Mode**: Executes dynamic SPAs and client-side scripts with Google's V8 engine while masking automation markers (`navigator.webdriver = undefined`), randomizing browser fingerprints, and blocking >3,500 tracking domains.
     - **Zero Cloud Scraper Dependencies**: Operates 100% locally with zero external scraping API costs (no ScrapingBee, Firecrawl, or BrightData subscriptions needed) and zero telemetry or analytics collection.
     - **Context Refinement & In-Memory Lifecycle**: Converts pages directly to clean hierarchical Markdown, trims navigational bloat, enforces a strict 5,000–7,000 word ceiling for LLaMA 32k context, and discards transient data from memory immediately after response generation with zero disk junk.
+17. **Automated Integration & Reliability Testing Suite**: Comprehensive unit and integration test suite located in `tests/` covering priority queue concurrency, voice interruption, MCP tool crashes, memory leak resistance, and two-tier security safeguards.
 
 ---
 
@@ -104,9 +109,32 @@ Project/
 │       ├── rest/         # Source frame sequence for rest state
 │       ├── thinking/     # Source frame sequence for thinking state
 │       └── work/         # Source frame sequence for work state
-├── MCP/                  # Octopus Model Context Protocol (MCP) framework (external repo)
-└── research/             # MCP deep research and tool development guides
+├── MCP/                  # Octopus Model Context Protocol (MCP) framework (external standalone subsystem)
+├── Researcher/           # Autonomous Deep Research subsystem (iterative scraping, Obsidian vault, PDF export)
+├── docs/                 # Technical specifications and benchmark reports
+│   └── turbo_quant.md    # TurboQuant mathematical formulation & empirical benchmarks
+└── tests/                # Automated unit and integration test suite
 ```
+
+---
+
+## Decoupled Companion Subsystems
+
+ALFRED is designed as a modular core supported by independent, decoupled companion frameworks:
+
+### 1. [Model Context Protocol (MCP)](MCP/)
+Located in `MCP/`, this external framework implements the Anthropic Model Context Protocol specification for ALFRED:
+- **Octopus Bridge**: Synchronous facade with an asynchronous background daemon for sub-millisecond tool routing.
+- **Fast-Path Routing & Classification**: Hybrid regex routing paired with local Qwen 4-bit tool intent classification.
+- **Unified Tool Registry**: Hosts built-in tools for system management, active application lifecycle, volume controls, audio devices, and window layouts.
+- **External Stdio Servers**: Plug-and-play support for standard JSON-RPC stdio MCP servers.
+
+### 2. [Autonomous Deep Researcher](Researcher/)
+Located in `Researcher/`, this standalone deep research agent performs iterative academic and web investigations:
+- **Resilient Multi-Tier Collector**: Bypasses bot verification and Cloudflare challenges using Obscura's headless stealth engine backed by Bing base64 search fallback.
+- **Iterative Sub-Topic Crawling**: Recursively parses discovered on-page links, filtering out boilerplate navigation.
+- **Context-Budgeted Synthesis**: Partitions documents through `SmartSemanticChunker` and synthesizes comprehensive research notes with local LLMs (SmolLM2 / LLaMA).
+- **Knowledge Vault & Presentation**: Automatically indexes synthesized notes into an Obsidian markdown vault with bidirectional links, exporting publication-ready HTML and PDF reports via headless Chrome.
 
 ---
 

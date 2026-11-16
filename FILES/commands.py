@@ -8,6 +8,7 @@ Tool and system actions handled by Octopus MCP are routed via MCP.
 from FILES.util_functions import multi_replace
 from FILES.logger import get_logger
 from FILES.LATENCY_RECORDER import track_latency
+from FILES.security import security_manager
 
 # Component handlers & registries
 from FILES.command_components import (
@@ -42,6 +43,12 @@ logger = get_logger(__name__)
 def process_command(command: str) -> str:
     """Dispatches a text/voice command to the appropriate component handler."""
     logger.info(f"Processing command: '{command}'")
+
+    # Check pending elevated confirmations first (5-second timeout window)
+    if security_manager.is_pending():
+        handled, response = security_manager.handle_confirmation(command)
+        if handled:
+            return response
     
     command = multi_replace(str(command), {"open": "$", "start": "$", "close": "&", "end": "&"})
     
